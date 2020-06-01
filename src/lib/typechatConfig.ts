@@ -4,7 +4,6 @@ import * as fs from 'fs';
 import * as process from 'process';
 import { Validator } from './core';
 import * as oai from './openai';
-import { TypechatErrorCode, TypechatException } from './typechatException';
 
 /**
  * Configuration for Typechat.
@@ -13,28 +12,15 @@ import { TypechatErrorCode, TypechatException } from './typechatException';
  * But since time is of the essence...
  */
 export type TypechatConfig = {
-    azureOAI?: oai.OpenAISettings; // Azure AI configuration
-    OAI?: oai.OpenAISettings; // Open AI
+    azureOAI: oai.AzureOAISettings; // Azure AI configuration
 };
 
 // I am sure there is an automated way to do this.
 // This manually visits the tree for now
 export function validate(config: TypechatConfig): void {
-    Validator.defined(config, 'config');
-
-    let hasOpenAISettings = false;
-    if (Validator.isDefined(config.azureOAI)) {
-        oai.validateOAISettings(config.azureOAI!);
-        hasOpenAISettings = true;
-    } else if (Validator.isDefined(config.OAI)) {
-        oai.validateOAISettings(config.OAI!);
-        hasOpenAISettings = true;
-    }
-    if (!hasOpenAISettings) {
-        throw new TypechatException(
-            TypechatErrorCode.ConfigMissingOpenAISettings
-        );
-    }
+    Validator.exists(config, 'config');
+    Validator.exists(config.azureOAI, 'azureOAI');
+    oai.validateAzureOAISettings(config.azureOAI);
 }
 /**
  *
@@ -54,7 +40,7 @@ export function fromFile(
     return config;
 }
 
-export function fromEnv(autoValidate = true): TypechatConfig {
+export function fromEnv(autoValidate = true) {
     const config: TypechatConfig = {
         azureOAI: settingsFromEnv(),
     };
@@ -64,19 +50,15 @@ export function fromEnv(autoValidate = true): TypechatConfig {
     return config;
 }
 
-function settingsFromEnv(): oai.OpenAISettings {
-    let modelName = process.env.MODEL_NAME;
-    const deployment = process.env.DEPLOYMENT_NAME;
-    if (modelName === undefined) {
-        modelName = deployment;
-    }
+function settingsFromEnv(): oai.AzureOAISettings {
     return {
         apiKey: process.env.OPENAI_API_KEY as string,
         endpoint: process.env.OPENAI_API_BASE as string,
         models: [
             {
-                modelName: modelName as string,
-                deployment: deployment as string,
+                modelName: process.env.MODEL_NAME as string,
+                deployment: process.env.DEPLOYMENT_NAME as string,
+                type: oai.ModelType.Completion,
             },
         ],
     };

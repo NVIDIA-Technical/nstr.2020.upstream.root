@@ -1,19 +1,28 @@
 // (c) Copyright Microsoft Corp
 import * as vectorMath from './vectormath';
 import { ArgumentException, Validator } from './core';
-import { OpenAIClient } from './openai';
+import { AzureOAIClient } from './openai';
 
-export interface TextEmbeddingGenerator {
+export interface IEmbedding {
+    length: number;
+
+    euclideanLength(): number;
+    dotProduct(other: Embedding): number;
+    cosineSimilarity(other: Embedding): number;
+    normalize(): void;
+}
+
+export interface ITextEmbeddingGenerator {
     createEmbedding(text: string): Promise<Embedding>;
     createEmbeddings(texts: string[]): Promise<Embedding[]>;
 }
 
-export interface ScoredValue<T> {
+export interface IScoredValue<T> {
     value?: T;
     score: number;
 }
 
-export class Embedding extends Float32Array {
+export class Embedding extends Float32Array implements IEmbedding {
     private _normalized: boolean;
 
     constructor(vector: number[] | Float32Array) {
@@ -63,7 +72,7 @@ export class VectorizedList<T> {
     }
 
     public add(item: T, vector: number[] | Embedding) {
-        Validator.defined(vector, 'vector');
+        Validator.exists(vector, 'vector');
 
         let embedding: Embedding;
         if (vector instanceof Embedding) {
@@ -113,7 +122,7 @@ export class VectorizedList<T> {
         other: Embedding,
         topN: number,
         minScore: number = Number.MIN_VALUE
-    ): ScoredValue<T>[] {
+    ): IScoredValue<T>[] {
         const matches = new TopNCollection<T>(topN as number);
         for (let i = 0; i < this._embeddings.length; ++i) {
             const score: number = this._embeddings[i].cosineSimilarity(other);
@@ -132,11 +141,11 @@ export class VectorizedList<T> {
     public *similarityScore(
         other: Embedding,
         minScore: number
-    ): IterableIterator<ScoredValue<T>> {
+    ): IterableIterator<IScoredValue<T>> {
         for (let i = 0; i < this._embeddings.length; ++i) {
             const score: number = this._embeddings[i].cosineSimilarity(other);
             if (score >= minScore) {
-                const scoredValue: ScoredValue<T> = {
+                const scoredValue: IScoredValue<T> = {
                     value: this._items[i],
                     score: score,
                 };
@@ -146,12 +155,12 @@ export class VectorizedList<T> {
     }
 }
 
-export class OpenAITextEmbeddingGenerator implements TextEmbeddingGenerator {
+export class TextEmbeddingGenerator implements ITextEmbeddingGenerator {
     private _modelName: string;
-    private _oaiClient: OpenAIClient;
+    private _oaiClient: AzureOAIClient;
 
-    constructor(oaiClient: OpenAIClient, modelName: string) {
-        Validator.defined(oaiClient, 'oaiClient');
+    constructor(oaiClient: AzureOAIClient, modelName: string) {
+        Validator.exists(oaiClient, 'oaiClient');
         Validator.notEmpty(modelName, 'modelName');
         this._oaiClient = oaiClient;
         this._modelName = modelName;
@@ -173,14 +182,14 @@ export class OpenAITextEmbeddingGenerator implements TextEmbeddingGenerator {
 }
 
 export class VectorizedTextList extends VectorizedList<string> {
-    private _generator: TextEmbeddingGenerator;
-    constructor(generator: TextEmbeddingGenerator) {
-        Validator.defined(generator, 'generator');
+    private _generator: ITextEmbeddingGenerator;
+    constructor(generator: ITextEmbeddingGenerator) {
+        Validator.exists(generator, 'generator');
         super();
         this._generator = generator;
     }
 
-    get generator(): TextEmbeddingGenerator {
+    get generator(): ITextEmbeddingGenerator {
         return this._generator;
     }
 
@@ -203,13 +212,13 @@ export class VectorizedTextList extends VectorizedList<string> {
      * @param text Find nearest neighbors to this text
      * @param topN # of nearest neighbors to return
      * @param minScore minimum similarity score
-     * @returns An array of scored values
+     * @returns 
      */
     public async nearestText(
         text: string,
         topN: number,
         minScore: number = Number.MIN_VALUE
-    ): Promise<ScoredValue<string>[]> {
+    ): Promise<IScoredValue<string>[]> {
         const embedding = await this._generator.createEmbedding(text);
         return this.nearestNeighbors(embedding, topN, minScore);
     }
@@ -218,7 +227,7 @@ export class VectorizedTextList extends VectorizedList<string> {
  * Min-Heap based topN match collection. Matches are ordered by lowest ranking
  */
 export class TopNCollection<T> {
-    private _items: ScoredValue<T>[];
+    private _items: IScoredValue<T>[];
     private _count: number;
     private _maxCount: number;
 
@@ -243,11 +252,11 @@ export class TopNCollection<T> {
     }
 
     // Returns the lowest scoring item in the collection
-    public get pop(): ScoredValue<T> {
+    public get pop(): IScoredValue<T> {
         return this.removeTop();
     }
 
-    public get top(): ScoredValue<T> {
+    public get top(): IScoredValue<T> {
         return this._items[1];
     }
 
@@ -271,7 +280,7 @@ export class TopNCollection<T> {
         this.upHeap(this._count);
     }
 
-    byRank(): ScoredValue<T>[] {
+    byRank(): IScoredValue<T>[] {
         this.sortDescending();
         this._items.shift();
         return this._items;
@@ -290,7 +299,7 @@ export class TopNCollection<T> {
         this._count = count;
     }
 
-    private removeTop(): ScoredValue<T> {
+    private removeTop(): IScoredValue<T> {
         if (this._count === 0) {
             throw new ArgumentException('Empty queue');
         }

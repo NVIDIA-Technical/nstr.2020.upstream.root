@@ -36,12 +36,8 @@ export class ArgumentException extends Error {
 
 export class Validator {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    public static isDefined(value: any): boolean {
-        return value !== undefined && value !== null;
-    }
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    public static defined(value: any, name?: string): void {
-        if (value === undefined || value === null) {
+    public static exists(value: any, name?: string): void {
+        if (value === null || value === undefined) {
             throw new Error(`${name || 'Value'} must be defined`);
         }
     }
