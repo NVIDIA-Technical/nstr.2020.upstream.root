@@ -1,12 +1,6 @@
 {
-    "extends": "./node_modules/gts/",
-    "rules": {
-        "prettier/prettier": ["error", { "endOfLine": "auto" }],
-        "node/no-unpublished-import": [
-            "error",
-            {
-                "allowModules": ["spotify-types"]
-            }
-        ]
-    }
+  "extends": "./node_modules/gts/",
+  "rules": {
+    "prettier/prettier": ["error", {"endOfLine": "auto"}]
+  }
 }
