@@ -20,7 +20,7 @@ processRequests(`${musicalNote}> `, process.argv[2], async (request) => {
         return;
     }
     const program = response.data;
-    console.log(JSON.stringify(program, undefined, 2));
+    console.log(programToText(program));
     console.log("Running program:");
     const result = await runProgram(program, handleCall);
     if (result !== undefined) {
@@ -44,30 +44,75 @@ async function handleCall(func: string, args: unknown[]): Promise<unknown> {
     }
 }
 
+function programToText(program: Program) {
+    return program.expressions.map((expr, i) => `const step${i + 1} = ${exprToString(expr)};`).join("\n");
+
+    function exprToString(expr: unknown): string {
+        return typeof expr === "object" && expr !== null ?
+            objectToString(expr as Record<string, unknown>) :
+            JSON.stringify(expr);
+    }
+
+    function objectToString(obj: Record<string, unknown>) {
+        if (obj.hasOwnProperty("@ref")) {
+            const index = obj["@ref"];
+            if (typeof index === "number") {
+                return `step${index + 1}`;
+            }
+        }
+        if (obj.hasOwnProperty("@func") && obj.hasOwnProperty("@args")) {
+            const func = obj["@func"];
+            const args = obj["@args"];
+            if (typeof func === "string" && Array.isArray(args)) {
+                return `${func}(${arrayToString(args)})`;
+            }
+        }
+        if (Array.isArray(obj)) {
+            return `[${arrayToString(obj)}]`;
+        }
+        return `{ ${Object.keys(obj).map(key => `${JSON.stringify(key)}: ${exprToString(obj[key])}`).join(", ")} }`;
+    }
+
+    function arrayToString(array: unknown[]) {
+        return array.map(exprToString).join(", ");
+    }
+}
+
 async function runProgram(program: Program, onCall: (func: string, args: unknown[]) => Promise<unknown>) {
     const results: unknown[] = [];
-    for (const statement of program.statements) {
-        results.push(await onCall(statement.func, dereference(statement.args)));
+    for (const expr of program.expressions) {
+        results.push(await evaluate(expr));
     }
     return results.length > 0 ? results[results.length - 1] : undefined;
 
-    function dereference<T>(value: T): T {
-        if (typeof value === "object" && value !== null) {
-            if (value.hasOwnProperty("@index")) {
-                const index = (value as Record<string, unknown>)["@index"];
-                if (typeof index === "number" && index < results.length) {
-                    return results[index] as T;
-                }
+    async function evaluate(expr: unknown): Promise<unknown> {
+        return typeof expr === "object" && expr !== null ?
+            await evaluateObject(expr as Record<string, unknown>) :
+            expr;
+    }
+
+    async function evaluateObject(obj: Record<string, unknown>) {
+        if (obj.hasOwnProperty("@ref")) {
+            const index = obj["@ref"];
+            if (typeof index === "number" && index < results.length) {
+                return results[index];
             }
-            if (Array.isArray(value)) {
-                return value.map(dereference) as T;
-            }
-            const result: Record<string, unknown> = {};
-            for (const key in value) {
-                result[key] = dereference((value as Record<string, unknown>)[key]);
-            }
-            return result as T;
         }
-        return value;
+        if (obj.hasOwnProperty("@func") && obj.hasOwnProperty("@args")) {
+            const func = obj["@func"];
+            const args = obj["@args"];
+            if (typeof func === "string" && Array.isArray(args)) {
+                return await onCall(func, await evaluateArray(args));
+            }
+        }
+        if (Array.isArray(obj)) {
+            return evaluateArray(obj);
+        }
+        const values = await Promise.all(Object.values(obj).map(evaluate));
+        return Object.fromEntries(Object.keys(obj).map((k, i) => [k, values[i]]));
+    }
+
+    function evaluateArray(array: unknown[]) {
+        return Promise.all(array.map(evaluate));
     }
 }
