@@ -89,7 +89,7 @@ from .types import SQLAnswer, Explanation, QuestionSQLPair, Question, QuestionId
     FullQuestionDocument, QuestionList, QuestionCategory, AccuracyStats, UserEmail, UserOTP, ApiKey, OrganizationList, \
     Organization, NewOrganization, StringData, QuestionStringList, Visibility, NewOrganizationMember, DataFrameJSON
 from typing import List, Union, Callable, Tuple
-from .exceptions import ImproperlyConfigured, DependencyError, ConnectionError, OTPCodeError, SQLRemoveError, \
+from .exceptions import ImproperlyConfigured, DependencyError, ConnectionError, OtpCodeError, SQLRemoveError, \
     ValidationError, APIError
 from .utils import validate_config_path
 import warnings
@@ -192,12 +192,12 @@ def get_api_key(email: str, otp_code: Union[str, None] = None) -> str:
         d = __unauthenticated_rpc_call(method="send_otp", params=params)
 
         if 'result' not in d:
-            raise OTPCodeError("Error sending OTP code.")
+            raise OtpCodeError("Error sending OTP code.")
 
         status = Status(**d['result'])
 
         if not status.success:
-            raise OTPCodeError(f"Error sending OTP code: {status.message}")
+            raise OtpCodeError(f"Error sending OTP code: {status.message}")
 
         otp_code = input("Check your email for the code and enter it here: ")
 
@@ -206,12 +206,12 @@ def get_api_key(email: str, otp_code: Union[str, None] = None) -> str:
     d = __unauthenticated_rpc_call(method="verify_otp", params=params)
 
     if 'result' not in d:
-        raise OTPCodeError("Error verifying OTP code.")
+        raise OtpCodeError("Error verifying OTP code.")
 
     key = ApiKey(**d['result'])
 
     if key is None:
-        raise OTPCodeError("Error verifying OTP code.")
+        raise OtpCodeError("Error verifying OTP code.")
 
     api_key = key.key
 
@@ -982,7 +982,13 @@ def ask(question: Union[str, None] = None, print_results: bool = True, auto_trai
             plotly_code = generate_plotly_code(question=question, sql=sql, df=df)
             fig = get_plotly_figure(plotly_code=plotly_code, df=df)
             if print_results:
-                fig.show()
+                try:
+                    display = __import__('IPython.display', fromlist=['display']).display
+                    Image = __import__('IPython.display', fromlist=['Image']).Image
+                    img_bytes = fig.to_image(format="png", scale=2)
+                    display(Image(img_bytes))
+                except Exception as e:
+                    fig.show()
 
             if generate_followups:
                 followup_questions = generate_followup_questions(question=question, df=df)
@@ -990,6 +996,7 @@ def ask(question: Union[str, None] = None, print_results: bool = True, auto_trai
                     print("AI-generated follow-up questions:")
                     for followup_question in followup_questions:
                         print(followup_question)
+                        pass
 
                 if print_results:
                     return None

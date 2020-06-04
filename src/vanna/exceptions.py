@@ -17,7 +17,7 @@ class ConnectionError(BaseException):
     pass
 
 
-class OTPCodeError(BaseException):
+class OtpCodeError(BaseException):
     """Raise for invalid otp or not able to send it"""
 
     pass
