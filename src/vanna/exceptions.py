@@ -1,3 +1,4 @@
+
 class ImproperlyConfigured(BaseException):
     """Raise for incorrect configuration."""
 
@@ -44,3 +45,4 @@ class APIError(BaseException):
     """Raise for API errors"""
 
     pass
+
