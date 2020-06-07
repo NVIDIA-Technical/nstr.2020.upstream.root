@@ -988,8 +988,6 @@ class VannaBase(ABC):
                         return None
                     else:
                         return sql, df, None
-            else:
-                return sql, df, None
 
         except Exception as e:
             print("Couldn't run sql: ", e)
