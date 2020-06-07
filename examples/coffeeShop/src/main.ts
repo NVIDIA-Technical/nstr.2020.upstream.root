@@ -2,6 +2,7 @@ import fs from "fs";
 import path from "path";
 import dotenv from "dotenv";
 import { createLanguageModel, createJsonTranslator, processRequests } from "typechat";
+import { createTypeScriptJsonValidator } from "typechat/ts";
 import { Cart } from "./coffeeShopSchema";
 
 // TODO: use local .env file.
@@ -9,7 +10,8 @@ dotenv.config({ path: path.join(__dirname, "../../../.env") });
 
 const model = createLanguageModel(process.env);
 const schema = fs.readFileSync(path.join(__dirname, "coffeeShopSchema.ts"), "utf8");
-const translator = createJsonTranslator<Cart>(model, schema, "Cart");
+const validator = createTypeScriptJsonValidator<Cart>(schema, "Cart");
+const translator = createJsonTranslator(model, validator);
 
 function processOrder(cart: Cart) {
     // Process the items in the cart
