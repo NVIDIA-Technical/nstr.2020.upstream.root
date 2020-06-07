@@ -1,0 +1,52 @@
+{
+  "name": "typechat",
+  "author": "Microsoft",
+  "version": "0.1.0",
+  "license": "MIT",
+  "description": "TypeChat is an experimental library that makes it easy to build natural language interfaces using types.",
+  "keywords": [
+    "schema",
+    "LLM",
+    "prompt",
+    "TypeScript",
+    "validation"
+  ],
+  "homepage": "https://github.com/microsoft/TypeChat#readme",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/microsoft/TypeChat.git"
+  },
+  "bugs": {
+    "url": "https://github.com/microsoft/TypeChat/issues"
+  },
+  "scripts": {
+    "build": "tsc -p src",
+    "build-all": "npm run build --workspaces",
+    "prepare": "npm run build-all"
+  },
+  "exports": {
+    ".": "./dist/index.js",
+    "./ts": "./dist/ts/index.js",
+    "./zod": "./dist/zod/index.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "files": [
+    "dist",
+    "LICENSE",
+    "README.md",
+    "SECURITY.md"
+  ],
+  "dependencies": {
+    "typescript": "^5.3.3",
+    "zod": "^3.22.4"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.4"
+  },
+  "workspaces": [
+    "./",
+    "./examples/*"
+  ]
+}
