@@ -8,7 +8,6 @@ from chromadb.config import Settings
 from chromadb.utils import embedding_functions
 
 from ..base import VannaBase
-from ..utils import deterministic_uuid
 
 default_ef = embedding_functions.DefaultEmbeddingFunction()
 
@@ -66,7 +65,7 @@ class ChromaDB_VectorStore(VannaBase):
             },
             ensure_ascii=False,
         )
-        id = deterministic_uuid(question_sql_json) + "-sql"
+        id = str(uuid.uuid4()) + "-sql"
         self.sql_collection.add(
             documents=question_sql_json,
             embeddings=self.generate_embedding(question_sql_json),
@@ -76,7 +75,7 @@ class ChromaDB_VectorStore(VannaBase):
         return id
 
     def add_ddl(self, ddl: str, **kwargs) -> str:
-        id = deterministic_uuid(ddl) + "-ddl"
+        id = str(uuid.uuid4()) + "-ddl"
         self.ddl_collection.add(
             documents=ddl,
             embeddings=self.generate_embedding(ddl),
