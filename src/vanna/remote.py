@@ -1,38 +1,38 @@
 import dataclasses
 import json
-from io import StringIO
 from typing import Callable, List, Tuple, Union
 
-import pandas as pd
 import requests
+import pandas as pd
+from io import StringIO
 
 from .base import VannaBase
 from .types import (
-  AccuracyStats,
-  ApiKey,
-  DataFrameJSON,
-  DataResult,
-  Explanation,
-  FullQuestionDocument,
-  NewOrganization,
-  NewOrganizationMember,
-  Organization,
-  OrganizationList,
-  PlotlyResult,
-  Question,
-  QuestionCategory,
-  QuestionId,
-  QuestionList,
-  QuestionSQLPair,
-  QuestionStringList,
-  SQLAnswer,
-  Status,
-  StatusWithId,
-  StringData,
-  TrainingData,
-  UserEmail,
-  UserOTP,
-  Visibility,
+    AccuracyStats,
+    ApiKey,
+    DataFrameJSON,
+    DataResult,
+    Explanation,
+    FullQuestionDocument,
+    NewOrganization,
+    NewOrganizationMember,
+    Organization,
+    OrganizationList,
+    PlotlyResult,
+    Question,
+    QuestionCategory,
+    QuestionId,
+    QuestionList,
+    QuestionSQLPair,
+    QuestionStringList,
+    SQLAnswer,
+    Status,
+    StatusWithId,
+    StringData,
+    TrainingData,
+    UserEmail,
+    UserOTP,
+    Visibility,
 )
 
 
@@ -93,15 +93,6 @@ class VannaDefault(VannaBase):
     def _dataclass_to_dict(self, obj):
         return dataclasses.asdict(obj)
 
-    def system_message(self, message: str) -> any:
-        return {"role": "system", "content": message}
-
-    def user_message(self, message: str) -> any:
-        return {"role": "user", "content": message}
-
-    def assistant_message(self, message: str) -> any:
-        return {"role": "assistant", "content": message}
-
     def get_training_data(self, **kwargs) -> pd.DataFrame:
         """
         Get the training data for the current model
@@ -146,7 +137,7 @@ class VannaDefault(VannaBase):
         d = self._rpc_call(method="remove_training_data", params=params)
 
         if "result" not in d:
-            raise Exception("Error removing training data")
+            raise Exception(f"Error removing training data")
 
         status = Status(**d["result"])
 
@@ -396,20 +387,9 @@ class VannaDefault(VannaBase):
         """
 
     def submit_prompt(self, prompt, **kwargs) -> str:
-        # JSON-ify the prompt
-        json_prompt = json.dumps(prompt)
-
-        params = [StringData(data=json_prompt)]
-
-        d = self._rpc_call(method="submit_prompt", params=params)
-
-        if "result" not in d:
-            return None
-
-        # Load the result into a dataclass
-        results = StringData(**d["result"])
-
-        return results.data
+        """
+        Not necessary for remote models as prompts are handled on the server side.
+        """
 
     def get_similar_question_sql(self, question: str, **kwargs) -> list:
         """
@@ -453,3 +433,40 @@ class VannaDefault(VannaBase):
         sql_answer = SQLAnswer(**d["result"])
 
         return sql_answer.sql
+
+    def generate_followup_questions(self, question: str, df: pd.DataFrame, **kwargs) -> list[str]:
+        """
+        **Example:**
+        ```python
+        vn.generate_followup_questions(question="What is the average salary of employees?", df=df)
+        # ['What is the average salary of employees in the Sales department?', 'What is the average salary of employees in the Engineering department?', ...]
+        ```
+
+        Generate follow-up questions using the Vanna.AI API.
+
+        Args:
+            question (str): The question to generate follow-up questions for.
+            df (pd.DataFrame): The DataFrame to generate follow-up questions for.
+
+        Returns:
+            List[str] or None: The follow-up questions, or None if an error occurred.
+        """
+        params = [
+            DataResult(
+                question=question,
+                sql=None,
+                table_markdown="",
+                error=None,
+                correction_attempts=0,
+            )
+        ]
+
+        d = self._rpc_call(method="generate_followup_questions", params=params)
+
+        if "result" not in d:
+            return None
+
+        # Load the result into a dataclass
+        question_string_list = QuestionStringList(**d["result"])
+
+        return question_string_list.questions        
