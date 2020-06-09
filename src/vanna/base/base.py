@@ -654,7 +654,6 @@ class VannaBase(ABC):
             password=password,
             account=account,
             database=database,
-            client_session_keep_alive=True
         )
 
         def run_sql_snowflake(sql: str) -> pd.DataFrame:
