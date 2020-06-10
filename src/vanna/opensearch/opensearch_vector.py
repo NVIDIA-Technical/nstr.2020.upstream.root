@@ -155,11 +155,6 @@ class OpenSearch_VectorStore(VannaBase):
     else:
       max_retries = 10
 
-    if config is not None and "es_http_compress" in config:
-      es_http_compress = config["es_http_compress"]
-    else:
-      es_http_compress = False
-
     print("OpenSearch_VectorStore initialized with es_urls: ", es_urls,
           " host: ", host, " port: ", port, " ssl: ", ssl, " verify_certs: ",
           verify_certs, " timeout: ", timeout, " max_retries: ", max_retries)
@@ -167,7 +162,7 @@ class OpenSearch_VectorStore(VannaBase):
       # Initialize the OpenSearch client by passing a list of URLs
       self.client = OpenSearch(
         hosts=[es_urls],
-        http_compress=es_http_compress,
+        http_compress=True,
         use_ssl=ssl,
         verify_certs=verify_certs,
         timeout=timeout,
@@ -180,7 +175,7 @@ class OpenSearch_VectorStore(VannaBase):
       # Initialize the OpenSearch client by passing a host and port
       self.client = OpenSearch(
         hosts=[{'host': host, 'port': port}],
-        http_compress=es_http_compress,
+        http_compress=True,
         use_ssl=ssl,
         verify_certs=verify_certs,
         timeout=timeout,
@@ -272,7 +267,6 @@ class OpenSearch_VectorStore(VannaBase):
         }
       }
     }
-    print(query)
     response = self.client.search(index=self.ddl_index, body=query,
                                   **kwargs)
     return [hit['_source']['ddl'] for hit in response['hits']['hits']]
@@ -285,7 +279,6 @@ class OpenSearch_VectorStore(VannaBase):
         }
       }
     }
-    print(query)
     response = self.client.search(index=self.document_index,
                                   body=query,
                                   **kwargs)
@@ -299,7 +292,6 @@ class OpenSearch_VectorStore(VannaBase):
         }
       }
     }
-    print(query)
     response = self.client.search(index=self.question_sql_index,
                                   body=query,
                                   **kwargs)
@@ -315,7 +307,6 @@ class OpenSearch_VectorStore(VannaBase):
       body={"query": {"match_all": {}}},
       size=1000
     )
-    print(query)
     # records = [hit['_source'] for hit in response['hits']['hits']]
     for hit in response['hits']['hits']:
       data.append(
