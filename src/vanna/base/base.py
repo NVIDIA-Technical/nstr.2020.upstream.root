@@ -1596,6 +1596,7 @@ class VannaBase(ABC):
         print_results: bool = True,
         auto_train: bool = True,
         visualize: bool = True,  # if False, will not generate plotly code
+        allow_llm_to_see_data: bool = False,
     ) -> Union[
         Tuple[
             Union[str, None],
