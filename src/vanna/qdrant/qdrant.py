@@ -3,7 +3,6 @@ from typing import List, Tuple
 
 import pandas as pd
 from qdrant_client import QdrantClient, grpc, models
-from qdrant_client.http.models.models import UpdateStatus
 
 from ..base import VannaBase
 from ..utils import deterministic_uuid
@@ -211,8 +210,7 @@ class Qdrant_VectorStore(VannaBase):
     def remove_training_data(self, id: str, **kwargs) -> bool:
         try:
             id, collection_name = self._parse_point_id(id)
-            res = self._client.delete(collection_name, points_selector=[id])
-            res == UpdateStatus.COMPLETED
+            self._client.delete(collection_name, points_selector=[id])
         except ValueError:
             return False
 

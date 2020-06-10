@@ -79,7 +79,6 @@ class VannaBase(ABC):
         self.static_documentation = ""
         self.dialect = self.config.get("dialect", "SQL")
         self.language = self.config.get("language", None)
-        self.max_tokens = self.config.get("max_tokens", 14000)
 
     def log(self, message: str, title: str = "Info"):
         print(message)
@@ -560,14 +559,14 @@ class VannaBase(ABC):
             "Please help to generate a SQL query to answer the question. Your response should ONLY be based on the given context and follow the response guidelines and format instructions. "
 
         initial_prompt = self.add_ddl_to_prompt(
-            initial_prompt, ddl_list, max_tokens=self.max_tokens
+            initial_prompt, ddl_list, max_tokens=14000
         )
 
         if self.static_documentation != "":
             doc_list.append(self.static_documentation)
 
         initial_prompt = self.add_documentation_to_prompt(
-            initial_prompt, doc_list, max_tokens=self.max_tokens
+            initial_prompt, doc_list, max_tokens=14000
         )
 
         initial_prompt += (
@@ -604,15 +603,15 @@ class VannaBase(ABC):
         initial_prompt = f"The user initially asked the question: '{question}': \n\n"
 
         initial_prompt = self.add_ddl_to_prompt(
-            initial_prompt, ddl_list, max_tokens=self.max_tokens
+            initial_prompt, ddl_list, max_tokens=14000
         )
 
         initial_prompt = self.add_documentation_to_prompt(
-            initial_prompt, doc_list, max_tokens=self.max_tokens
+            initial_prompt, doc_list, max_tokens=14000
         )
 
         initial_prompt = self.add_sql_to_prompt(
-            initial_prompt, question_sql_list, max_tokens=self.max_tokens
+            initial_prompt, question_sql_list, max_tokens=14000
         )
 
         message_log = [self.system_message(initial_prompt)]
