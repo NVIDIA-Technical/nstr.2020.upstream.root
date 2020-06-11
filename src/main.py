@@ -1,6 +1,6 @@
 from fastapi import FastAPI, Request, Form, Response, HTTPException
 from fastapi.templating import Jinja2Templates
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
 import uvicorn
 import uuid
@@ -172,6 +172,10 @@ async def api_docs(request: Request):
     return templates.TemplateResponse(
         "api.html", {"request": request}
     )
+
+@app.get('/favicon.ico')
+async def favicon():
+    return FileResponse('static/favicon.ico')
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
