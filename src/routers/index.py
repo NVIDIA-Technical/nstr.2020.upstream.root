@@ -3,9 +3,9 @@ from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 import uuid
 from process_input import process_input
+from config import MAX_DISPLAY_SIZE
 
 
-MAX_DISPLAY_SIZE = 300000
 
 
 def error_response(request: Request, error_message: str):
