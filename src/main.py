@@ -100,8 +100,12 @@ async def clone_repo(repo_url: str) -> str:
     
     id = str(uuid.uuid4())
     try:
-        proc = await asyncio.create_subprocess_shell(
-            f"git clone --depth=1 {repo_url} ../tmp/{id}",
+        proc = await asyncio.create_subprocess_exec(
+            "git",
+            "clone",
+            "--depth=1",
+            repo_url,
+            f"../tmp/{id}",
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,
         )
@@ -144,8 +148,8 @@ async def process_repo(
     if max_size != 10240:
         cmd += f" --max-size {max_size}"
 
-    proc = await asyncio.create_subprocess_shell(
-        cmd,
+    proc = await asyncio.create_subprocess_exec(
+        *cmd.split(),
         stdout=asyncio.subprocess.PIPE,
         stderr=asyncio.subprocess.PIPE,
     )
