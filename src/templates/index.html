@@ -5,32 +5,38 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" type="image/x-icon" href="/static/favicon.ico">
-    <title>Git Digest</title>
+    <title>Git digest</title>
 
     <!-- This is the correct way to include Tailwind CSS via CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         function copyText(className) {
             const textarea = document.querySelector('.' + className);
-            if (!textarea) return;
+            const button = document.querySelector(`button[onclick="copyText('${className}')"]`);
+            if (!textarea || !button) return;
 
+            // Copy text
             navigator.clipboard.writeText(textarea.value)
-                .then(() => showToast('Copied to clipboard!'))
-                .catch(err => showToast('Failed to copy'));
-        }
+                .then(() => {
+                    // Store original content
+                    const originalContent = button.innerHTML;
 
-        function showToast(message) {
-            const toast = document.createElement('div');
-            toast.className = 'fixed bottom-5 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white px-6 py-3 rounded-lg opacity-0 transition-opacity duration-300';
-            toast.textContent = message;
-            document.body.appendChild(toast);
+                    // Change button content
+                    button.innerHTML = 'Copied!';
 
-            setTimeout(() => toast.classList.add('opacity-100'), 10);
-
-            setTimeout(() => {
-                toast.classList.remove('opacity-100');
-                setTimeout(() => toast.remove(), 300);
-            }, 2000);
+                    // Reset after 1 second
+                    setTimeout(() => {
+                        button.innerHTML = originalContent;
+                    }, 1000);
+                })
+                .catch(err => {
+                    // Show error in button
+                    const originalContent = button.innerHTML;
+                    button.innerHTML = 'Failed to copy';
+                    setTimeout(() => {
+                        button.innerHTML = originalContent;
+                    }, 1000);
+                });
         }
 
         function submitExample(repoName) {
@@ -44,15 +50,20 @@
             const form = event.target;
             const submitButton = form.querySelector('button[type="submit"]');
             const originalContent = submitButton.innerHTML;
+            const currentStars = document.getElementById('github-stars').textContent;
 
             // Change button to loading state
             submitButton.disabled = true;
             submitButton.innerHTML = `
-                <svg class="animate-spin -ml-1 mr-2 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
+                <div class="flex items-center justify-center">
+                    <svg class="animate-spin h-5 w-5 text-gray-900" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    <span class="ml-2">Processing...</span>
+                </div>
             `;
+            submitButton.classList.add('bg-[#ffb14d]'); // Darker shade of the original color
 
             // Submit the form
             fetch(form.action, {
@@ -62,6 +73,15 @@
                 .then(response => response.text())
                 .then(html => {
                     document.documentElement.innerHTML = html;
+                    // Restore star count after page update
+                    document.getElementById('github-stars').textContent = currentStars;
+
+                    // Scroll to results if they exist
+                    const resultsSection = document.querySelector('[data-results]');
+                    if (resultsSection) {
+                        resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }
+
                     // Check for error message in the response
                     const errorMessage = document.getElementById('error-message');
                     if (errorMessage) {
@@ -75,43 +95,49 @@
                 });
         }
     </script>
+
 </head>
 
-<body class="bg-gray-50 min-h-screen flex flex-col">
+<body class="bg-[#FFFDF8] min-h-screen flex flex-col">
     <!-- Sticky Header -->
-    <header class="sticky top-0 bg-white border-b border-gray-200 z-50">
+    <header class="sticky top-0 bg-[#FFFDF8] border-b-[3px] border-gray-900 z-50">
         <div class="max-w-4xl mx-auto px-4">
             <div class="flex justify-between items-center h-16">
                 <!-- Logo -->
-                <h1 class="text-2xl font-bold text-gray-800">
-                    <span class="text-blue-600">Git</span>digest
-                </h1>
+                <div class="flex items-center gap-4">
+                    <h1 class="text-2xl font-bold tracking-tight">
+                        <a href="/" class="hover:opacity-80 transition-opacity">
+                            <span class="text-gray-900">Git</span><span class="text-[#fca847]">digest</span>
+                        </a>
+                    </h1>
+                </div>
 
-                <!-- Navigation -->
+                <!-- Navigation with updated styling -->
                 <nav class="flex items-center space-x-6">
                     <a href="https://github.com/cyclotruc/gitdigest/issues/new" target="_blank"
                         rel="noopener noreferrer"
-                        class="text-gray-600 hover:text-blue-600 transition-colors flex items-center gap-1.5">
+                        class="text-gray-900 hover:-translate-y-0.5 transition-transform flex items-center gap-1.5">
                         Suggest Feature
                     </a>
-                    <a href="/api" class="text-gray-600 hover:text-blue-600 transition-colors">API</a>
-                    <a href="https://github.com/cyclotruc/gitdigest" target="_blank" rel="noopener noreferrer"
-                        class="text-gray-600 hover:text-blue-600 transition-colors flex items-center gap-1.5">
-                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                            <path fill-rule="evenodd"
-                                d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"
-                                clip-rule="evenodd"></path>
-                        </svg>
-                        GitHub
-                        <!-- Github stars -->
-                        <!-- <span class="flex items-center gap-1 text-gray-500">
-                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 16 16">
-                                <path
-                                    d="M8 .25a.75.75 0 0 1 .673.418l1.882 3.815 4.21.612a.75.75 0 0 1 .416 1.279l-3.046 2.97.719 4.192a.751.751 0 0 1-1.088.791L8 12.347l-3.766 1.98a.75.75 0 0 1-1.088-.79l.72-4.194L.818 6.374a.75.75 0 0 1 .416-1.28l4.21-.611L7.327.668A.75.75 0 0 1 8 .25z" />
+                    <a href="/api" class="text-gray-900 hover:-translate-y-0.5 transition-transform">API</a>
+                    <div class="flex items-center gap-2">
+                        <a href="https://github.com/cyclotruc/gitdigest" target="_blank" rel="noopener noreferrer"
+                            class="text-gray-900 hover:-translate-y-0.5 transition-transform flex items-center gap-1.5">
+                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                <path fill-rule="evenodd"
+                                    d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"
+                                    clip-rule="evenodd"></path>
                             </svg>
-                            <span id="github-stars">...</span>
-                        </span> -->
-                    </a>
+                            GitHub
+                        </a>
+                        <div class="flex items-center text-sm text-gray-600">
+                            <svg class="w-4 h-4 text-[#ffc480] mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                <path
+                                    d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                            </svg>
+                            <span id="github-stars">0</span>
+                        </div>
+                    </div>
                 </nav>
             </div>
         </div>
@@ -120,9 +146,33 @@
     <!-- Main content wrapper -->
     <main class="flex-1 w-full">
         <div class="max-w-4xl mx-auto px-4 py-8">
-            <div class="mb-12 text-center">
-                <h1 class="text-3xl font-bold text-gray-900 mb-4 max-w-2xl mx-auto">Prompt-friendly codebase</h1>
-                <p class="text-gray-600 text-lg max-w-2xl mx-auto">
+            <div class="mb-12">
+                <div
+                    class="relative w-full mx-auto flex sm:flex-row flex-col justify-center items-start sm:items-center">
+                    <svg class="h-auto w-16 sm:w-20 md:w-24 flex-shrink-0 p-2 md:relative sm:absolute lg:absolute left-0 lg:-translate-x-full lg:ml-32 md:translate-x-10 sm:-translate-y-16 md:-translate-y-0 -translate-x-2 lg:-translate-y-10"
+                        viewBox="0 0 91 98" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path
+                            d="m35.878 14.162 1.333-5.369 1.933 5.183c4.47 11.982 14.036 21.085 25.828 24.467l5.42 1.555-5.209 2.16c-11.332 4.697-19.806 14.826-22.888 27.237l-1.333 5.369-1.933-5.183C34.56 57.599 24.993 48.496 13.201 45.114l-5.42-1.555 5.21-2.16c11.331-4.697 19.805-14.826 22.887-27.237Z"
+                            fill="#FE4A60" stroke="#000" stroke-width="3.445"></path>
+                        <path
+                            d="M79.653 5.729c-2.436 5.323-9.515 15.25-18.341 12.374m9.197 16.336c2.6-5.851 10.008-16.834 18.842-13.956m-9.738-15.07c-.374 3.787 1.076 12.078 9.869 14.943M70.61 34.6c.503-4.21-.69-13.346-9.49-16.214M14.922 65.967c1.338 5.677 6.372 16.756 15.808 15.659M18.21 95.832c-1.392-6.226-6.54-18.404-15.984-17.305m12.85-12.892c-.41 3.771-3.576 11.588-12.968 12.681M18.025 96c.367-4.21 3.453-12.905 12.854-14"
+                            stroke="#000" stroke-width="2.548" stroke-linecap="round"></path>
+                    </svg>
+                    <h1
+                        class="text-4xl sm:text-5xl sm:pt-20 lg:pt-5 md:text-6xl lg:text-7xl font-bold tracking-tighter w-full inline-block text-left md:text-center relative">
+                        Prompt-friendly <br>codebase&nbsp;
+                    </h1>
+                    <svg class="w-16 lg:w-20 h-auto lg:absolute flex-shrink-0 right-0 bottom-0 md:block hidden translate-y-10 md:translate-y-20 lg:translate-y-4 lg:-translate-x-12 -translate-x-10"
+                        viewBox="0 0 92 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path
+                            d="m35.213 16.953.595-5.261 2.644 4.587a35.056 35.056 0 0 0 26.432 17.33l5.261.594-4.587 2.644A35.056 35.056 0 0 0 48.23 63.28l-.595 5.26-2.644-4.587a35.056 35.056 0 0 0-26.432-17.328l-5.261-.595 4.587-2.644a35.056 35.056 0 0 0 17.329-26.433Z"
+                            fill="#5CF1A4" stroke="#000" stroke-width="2.868" class=""></path>
+                        <path
+                            d="M75.062 40.108c1.07 5.255 1.072 16.52-7.472 19.54m7.422-19.682c1.836 2.965 7.643 8.14 16.187 5.121-8.544 3.02-8.207 15.23-6.971 20.957-1.97-3.343-8.044-9.274-16.588-6.254M12.054 28.012c1.34-5.22 6.126-15.4 14.554-14.369M12.035 28.162c-.274-3.487-2.93-10.719-11.358-11.75C9.104 17.443 14.013 6.262 15.414.542c.226 3.888 2.784 11.92 11.212 12.95"
+                            stroke="#000" stroke-width="2.319" stroke-linecap="round"></path>
+                    </svg>
+                </div>
+                <p class="text-gray-600 text-lg max-w-2xl mx-auto text-center mt-8">
                     Turn any GitHub repository into a simple text digest of its codebase.
                     This is useful for feeding a codebase into any LLM.
                 </p>
@@ -135,102 +185,158 @@
             </div>
             {% endif %}
 
-            <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
-                <form method="post" class="flex flex-col sm:flex-row gap-4" id="digestForm"
-                    onsubmit="handleSubmit(event)">
-                    <input type="text" name="input_text" id="input_text" placeholder="https://github.com/..." required
-                        class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all">
-                    <button type="submit"
-                        class="px-6 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors duration-200 flex-shrink-0">
-                        Digest
-                    </button>
-                </form>
-                <div class="bg-gray-50 rounded-lg p-4 mt-4">
-                    <p class="text-sm text-gray-500 mb-2">Example repositories:</p>
-                    <div class="flex flex-wrap gap-2">
-                        <button onclick="submitExample('https://github.com/cyclotruc/gitdigest')"
-                            class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors duration-200">
-                            Gitdigest
-                        </button>
-                        <button onclick="submitExample('https://github.com/ollama/ollama')"
-                            class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors duration-200">
-                            Ollama
-                        </button>
-                        <button onclick="submitExample('https://github.com/pallets/flask')"
-                            class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors duration-200">
-                            Flask
-                        </button>
-                        <button onclick="submitExample('https://github.com/tailwindlabs/tailwindcss')"
-                            class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors duration-200">
-                            TailwindCSS
-                        </button>
-                        <button onclick="submitExample('https://github.com/langchain-ai/langchain-nextjs-template')"
-                            class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors duration-200">
-                            Langchain NextJS
-                        </button>
+            <div class="relative">
+                <div class="w-full h-full absolute inset-0 bg-black rounded-xl translate-y-2 translate-x-2"></div>
+                <div
+                    class="rounded-xl relative z-20 pl-8 sm:pl-10 pr-8 sm:pr-16 py-8 border-[3px] border-gray-900 bg-[#fff4da]">
+                    <img src="https://cdn.devdojo.com/images/january2023/shape-1.png"
+                        class="absolute md:block hidden left-0 h-[4.5rem] w-[4.5rem] bottom-0 -translate-x-full ml-3">
+
+                    <form method="post"
+                        class="flex md:flex-row flex-col w-full h-full justify-center items-stretch space-y-5 md:space-y-0 md:space-x-5"
+                        id="digestForm" onsubmit="handleSubmit(event)">
+                        <div class="relative w-full h-full">
+                            <div
+                                class="w-full h-full rounded bg-gray-900 translate-y-1 translate-x-1 absolute inset-0 z-10">
+                            </div>
+                            <input type="text" name="input_text" id="input_text" placeholder="https://github.com/..."
+                                required
+                                class="border-[3px] w-full relative z-20 border-gray-900 placeholder-gray-600 text-lg font-medium focus:outline-none py-3.5 px-6 rounded">
+                        </div>
+                        <div class="relative w-auto flex-shrink-0 h-full group">
+                            <div
+                                class="w-full h-full rounded bg-gray-800 translate-y-1 translate-x-1 absolute inset-0 z-10">
+                            </div>
+                            <button type="submit"
+                                class="py-3.5 rounded px-6 group-hover:-translate-y-px group-hover:-translate-x-px ease-out duration-300 z-20 relative w-full border-[3px] border-gray-900 font-medium bg-[#ffc480] tracking-wide text-lg flex-shrink-0 text-gray-900">
+                                Digest
+                            </button>
+                        </div>
+                    </form>
+
+                    <!-- Example repositories section -->
+                    <div class="mt-4">
+                        <p class="opacity-70 mb-3">Try these example repositories:</p>
+                        <div class="flex flex-wrap gap-2">
+                            <button onclick="submitExample('https://github.com/cyclotruc/gitdigest')"
+                                class="px-4 py-2 bg-[#FFFDF8] hover:bg-gray-100 text-gray-900 rounded transition-colors duration-200 border-[3px] border-gray-900 relative hover:-translate-y-px hover:-translate-x-px">
+                                Gitdigest
+                            </button>
+                            <button onclick="submitExample('https://github.com/ollama/ollama')"
+                                class="px-4 py-2 bg-[#FFFDF8] hover:bg-gray-100 text-gray-900 rounded transition-colors duration-200 border-[3px] border-gray-900 relative hover:-translate-y-px hover:-translate-x-px">
+                                Ollama
+                            </button>
+                            <button onclick="submitExample('https://github.com/pallets/flask')"
+                                class="px-4 py-2 bg-[#FFFDF8] hover:bg-gray-100 text-gray-900 rounded transition-colors duration-200 border-[3px] border-gray-900 relative hover:-translate-y-px hover:-translate-x-px">
+                                Flask
+                            </button>
+                            <button onclick="submitExample('https://github.com/tailwindlabs/tailwindcss')"
+                                class="px-4 py-2 bg-[#FFFDF8] hover:bg-gray-100 text-gray-900 rounded transition-colors duration-200 border-[3px] border-gray-900 relative hover:-translate-y-px hover:-translate-x-px">
+                                TailwindCSS
+                            </button>
+                            <button onclick="submitExample('https://github.com/langchain-ai/langchain-nextjs-template')"
+                                class="px-4 py-2 bg-[#FFFDF8] hover:bg-gray-100 text-gray-900 rounded transition-colors duration-200 border-[3px] border-gray-900 relative hover:-translate-y-px hover:-translate-x-px">
+                                Langchain NextJS
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
 
             {% if result %}
-            <div class="bg-white rounded-xl shadow-lg p-6 relative space-y-6">
-                <!-- Summary and Directory Structure Columns -->
-                <div class="grid grid-cols-1 md:grid-cols-12 gap-6">
-                    <!-- Summary Column (30%) -->
-                    <div class="md:col-span-4">
-                        <h3 class="text-lg font-semibold text-gray-800 mb-4">Summary</h3>
-                        <textarea
-                            class="w-full h-[200px] p-4 bg-gray-50 border border-gray-200 rounded-lg font-mono text-sm resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            readonly>{{ summary }}</textarea>
+            <div class="mt-10" data-results>
+                <div class="relative">
+                    <div class="w-full h-full absolute inset-0 bg-black rounded-xl translate-y-2 translate-x-2"></div>
+                    <div class="bg-[#fafafa] rounded-xl border-[3px] border-gray-900 p-6 relative z-20 space-y-6">
+                        <!-- Summary and Directory Structure -->
+                        <div class="grid grid-cols-1 md:grid-cols-12 gap-6">
+                            <!-- Summary Column -->
+                            <div class="md:col-span-4">
+                                <h3 class="text-lg font-bold text-gray-900 mb-4">Summary</h3>
+                                <div class="relative">
+                                    <div
+                                        class="w-full h-full rounded bg-gray-900 translate-y-1 translate-x-1 absolute inset-0">
+                                    </div>
+                                    <textarea
+                                        class="w-full h-[200px] p-4 bg-[#fff4da] border-[3px] border-gray-900 rounded font-mono text-sm resize-none focus:outline-none relative z-10"
+                                        readonly>{{ summary }}</textarea>
+                                </div>
 
-                        {% if digest_id %}
-                        <a href="/download/{{ digest_id }}"
-                            class="mt-4 inline-flex items-center px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors duration-200">
-                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                            </svg>
-                            Download Full Digest
-                        </a>
-                        {% endif %}
-                    </div>
+                                {% if digest_id %}
+                                <div class="relative mt-4 inline-block group">
+                                    <div
+                                        class="w-full h-full rounded bg-gray-900 translate-y-1 translate-x-1 absolute inset-0">
+                                    </div>
+                                    <a href="/download/{{ digest_id }}"
+                                        class="inline-flex items-center px-4 py-2 bg-[#ffc480] border-[3px] border-gray-900 text-gray-900 rounded group-hover:-translate-y-px group-hover:-translate-x-px transition-transform relative z-10">
+                                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                                        </svg>
+                                        Download Full Digest
+                                    </a>
+                                </div>
+                                {% endif %}
+                            </div>
 
-                    <!-- Directory Structure Column (70%) -->
-                    <div class="md:col-span-8">
-                        <div class="flex justify-between items-center mb-4">
-                            <h3 class="text-lg font-semibold text-gray-800">Directory Structure</h3>
-                            <button onclick="copyText('directory-structure')"
-                                class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors duration-200 flex items-center gap-2">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
-                                </svg>
-                                Copy
-                            </button>
+                            <!-- Directory Structure Column -->
+                            <div class="md:col-span-8">
+                                <div class="flex justify-between items-center mb-4">
+                                    <h3 class="text-lg font-bold text-gray-900">Directory Structure</h3>
+                                    <div class="relative group">
+                                        <div
+                                            class="w-full h-full rounded bg-gray-900 translate-y-1 translate-x-1 absolute inset-0">
+                                        </div>
+                                        <button onclick="copyText('directory-structure')"
+                                            class="px-4 py-2 bg-[#ffc480] border-[3px] border-gray-900 text-gray-900 rounded group-hover:-translate-y-px group-hover:-translate-x-px transition-transform relative z-10 flex items-center gap-2">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
+                                            </svg>
+                                            Copy
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="relative">
+                                    <div
+                                        class="w-full h-full rounded bg-gray-900 translate-y-1 translate-x-1 absolute inset-0">
+                                    </div>
+                                    <textarea
+                                        class="directory-structure w-full p-4 bg-[#fff4da] border-[3px] border-gray-900 rounded font-mono text-sm resize-y min-h-[200px] focus:outline-none relative z-10"
+                                        readonly>{{ tree }}</textarea>
+                                </div>
+                            </div>
                         </div>
-                        <textarea
-                            class="directory-tree w-full p-4 bg-gray-50 border border-gray-200 rounded-lg font-mono text-sm resize-y min-h-[200px] focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            readonly>{{ tree }}</textarea>
-                    </div>
-                </div>
 
-                <!-- Full Digest -->
-                <div>
-                    <div class="flex justify-between items-center mb-4">
-                        <h3 class="text-lg font-semibold text-gray-800">Files Content</h3>
-                        <button onclick="copyText('result-text')"
-                            class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors duration-200 flex items-center gap-2">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
-                            </svg>
-                            Copy
-                        </button>
+                        <!-- Full Digest -->
+                        <div>
+                            <div class="flex justify-between items-center mb-4">
+                                <h3 class="text-lg font-bold text-gray-900">Files Content</h3>
+                                <div class="relative group">
+                                    <div
+                                        class="w-full h-full rounded bg-gray-900 translate-y-1 translate-x-1 absolute inset-0">
+                                    </div>
+                                    <button onclick="copyText('result-text')"
+                                        class="px-4 py-2 bg-[#ffc480] border-[3px] border-gray-900 text-gray-900 rounded group-hover:-translate-y-px group-hover:-translate-x-px transition-transform relative z-10 flex items-center gap-2">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
+                                        </svg>
+                                        Copy
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="relative">
+                                <div
+                                    class="w-full h-full rounded bg-gray-900 translate-y-1 translate-x-1 absolute inset-0">
+                                </div>
+                                <textarea
+                                    class="result-text w-full p-4 bg-[#fff4da] border-[3px] border-gray-900 rounded font-mono text-sm resize-y focus:outline-none relative z-10"
+                                    style="min-height: {{ '600px' if content else 'calc(100vh-800px)' }}"
+                                    readonly>{{ content }}</textarea>
+                            </div>
+                        </div>
                     </div>
-                    <textarea
-                        class="result-text w-full p-4 bg-gray-50 border border-gray-200 rounded-lg font-mono text-sm resize-y focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        style="min-height: {{ '600px' if content else 'calc(100vh-800px)' }}"
-                        readonly>{{ content }}</textarea>
                 </div>
             </div>
             {% endif %}
@@ -238,13 +344,13 @@
     </main>
 
     <!-- Footer -->
-    <footer class="w-full border-t border-gray-200 mt-auto">
+    <footer class="w-full border-t-[3px] border-gray-900 mt-auto">
         <div class="max-w-4xl mx-auto px-4 py-8">
-            <div class="flex justify-center items-center text-gray-600 text-sm">
+            <div class="flex justify-center items-center text-gray-900 text-sm">
                 <div class="flex items-center">
                     made with ❤️ by
                     <a href="https://bsky.app/profile/yasbaltrine.bsky.social" target="_blank" rel="noopener noreferrer"
-                        class="ml-1 hover:text-blue-600">
+                        class="ml-1 hover:underline">
                         @rom2
                     </a>
                 </div>
