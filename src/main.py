@@ -80,9 +80,24 @@ async def process_input(request: Request, input_text: str = Form(...)):
         }
     )
 
+def sanitize_git_url(url: str) -> str:
+    if not url.startswith("https://github.com/"):
+        return None
+    
+    trimmed = url.split(" ")[0]
+    return trimmed
+
+
+    
+
 
 @async_timeout(10)
 async def clone_repo(repo_url: str) -> str:
+
+    repo_url = sanitize_git_url(repo_url)
+    if not repo_url:
+        return None
+    
     id = str(uuid.uuid4())
     try:
         proc = await asyncio.create_subprocess_shell(
