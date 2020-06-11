@@ -32,19 +32,23 @@ load_dotenv()
 
 app = FastAPI()
 app.mount("/static", StaticFiles(directory="static"), name="static")
-# https://www.apianalytics.dev/dashboard/6633361d116e473a981333ec0a375f59
 app.add_middleware(Analytics, api_key=os.getenv('API_ANALYTICS_KEY'))
 app.add_middleware(TrustedHostMiddleware, allowed_hosts=["gitdigest.dev", "*.gitdigest.dev", "localhost"])
 templates = Jinja2Templates(directory="templates")
 
-with open("templates/index.html", "r") as f:
-    html = f.read()
 
 
 @app.get("/", response_class=HTMLResponse)
 async def read_root(request: Request):
+    print("read_root")
     return templates.TemplateResponse(
-        "index.html", {"request": request, "result": None, "summary": "", "tree": "", "content": ""}
+        "index.html", {
+            "request": request, 
+            "result": None, 
+            "summary": "", 
+            "tree": "", 
+            "content": "",
+        }
     )
 
 
@@ -65,7 +69,6 @@ async def process_input(request: Request, input_text: str = Form(...)):
             }
         )
     
-    # Store the full content in session or temporary file
     digest_id = str(uuid.uuid4())
     with open(f"../tmp/digest-{digest_id}.txt", "w") as f:
         f.write(f"Summary:\n{summary}\n\nFile Tree:\n{tree}\n\nDetailed Content:\n{content}")
@@ -86,7 +89,6 @@ async def process_input(request: Request, input_text: str = Form(...)):
         }
     )
 
-# Add new endpoint for downloading
 @app.get("/download/{digest_id}")
 async def download_digest(digest_id: str):
     try:
@@ -176,6 +178,117 @@ async def api_docs(request: Request):
 @app.get('/favicon.ico')
 async def favicon():
     return FileResponse('static/favicon.ico')
+
+
+@app.get("/{full_path:path}")
+async def catch_all(request: Request, full_path: str):
+    print("catch_all")
+
+    # Reconstruct GitHub URL
+    path_parts = full_path.split('/')
+    
+    # Initialize variables
+    github_path = None
+    is_blob = False
+    
+    # Check for blob or tree patterns
+    if 'blob' in path_parts:
+        blob_index = path_parts.index('blob')
+        if len(path_parts) > blob_index + 2:  # Ensure there's content after blob/branch
+            github_path = '/'.join(path_parts[blob_index + 2:])
+            is_blob = True
+    elif 'tree' in path_parts:
+        tree_index = path_parts.index('tree')
+        if len(path_parts) > tree_index + 2:  # Ensure there's content after tree/branch
+            github_path = '/'.join(path_parts[tree_index + 2:])
+    
+    # Reconstruct the GitHub URL
+    github_url = f"https://github.com/{path_parts[0]}/{path_parts[1]}"
+    
+    try:
+        summary, tree, content = await process_input(github_url)
+        
+        # Handle blob case - return only file content
+        if is_blob and github_path:
+            content_lines = content.split('\n')
+            file_content = ""
+            current_file = ""
+            capturing = False
+            
+            for line in content_lines:
+                if line.startswith("File: "):
+                    current_file = line[6:].strip()
+                    if current_file.endswith(github_path):
+                        capturing = True
+                    else:
+                        capturing = False
+                elif capturing and line.startswith("="):
+                    continue
+                elif capturing:
+                    file_content += line + "\n"
+                    
+            return templates.TemplateResponse(
+                "github.html",
+                {
+                    "request": request,
+                    "result": True,
+                    "summary": "",
+                    "tree": "",
+                    "content": file_content,
+                    "github_url": github_url
+                }
+            )
+            
+        # Handle tree case - analyze only subfolder
+        elif github_path:
+            filtered_content = ""
+            in_target_path = False
+            content_lines = content.split('\n')
+            
+            for line in content_lines:
+                if line.startswith("File: "):
+                    in_target_path = github_path in line
+                if in_target_path:
+                    filtered_content += line + "\n"
+                    
+            return templates.TemplateResponse(
+                "github.html",
+                {
+                    "request": request, 
+                    "result": True,
+                    "summary": summary,
+                    "tree": tree,
+                    "content": filtered_content,
+                    "github_url": github_url
+                }
+            )
+            
+    except Exception as e:
+        return templates.TemplateResponse(
+            "github.html",
+            {
+                "request": request,
+                "result": False,
+                "summary": "",
+                "tree": "",
+                "content": "",
+                "github_url": github_url,
+                "error_message": f"Error processing repository: {e}"
+            }
+        )
+    
+    # Default case - return full analysis
+    return templates.TemplateResponse(
+        "github.html",
+        {
+            "request": request,
+            "result": True,
+            "summary": summary,
+            "tree": tree,
+            "content": content,
+            "github_url": github_url
+        }
+    )
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
