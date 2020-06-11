@@ -18,21 +18,21 @@
                 <div class="flex items-center gap-4">
                     <h1 class="text-2xl font-bold tracking-tight">
                         <a href="/" class="hover:opacity-80 transition-opacity">
-                            <span class="text-gray-900">Git</span><span class="text-[#ffab4a]">digest</span>
+                            <span class="text-gray-900">Git</span><span class="text-[#ffab4a]">ingest</span>
                         </a>
                     </h1>
                 </div>
 
                 <!-- Navigation with updated styling -->
                 <nav class="flex items-center space-x-6">
-                    <a href="https://github.com/cyclotruc/gitdigest/issues/new" target="_blank"
+                    <a href="https://github.com/cyclotruc/gitingest/issues/new" target="_blank"
                         rel="noopener noreferrer"
                         class="text-gray-900 hover:-translate-y-0.5 transition-transform flex items-center gap-1.5">
                         Suggest Feature
                     </a>
                     <a href="/api" class="text-gray-900 hover:-translate-y-0.5 transition-transform">API</a>
                     <div class="flex items-center gap-2">
-                        <a href="https://github.com/cyclotruc/gitdigest" target="_blank" rel="noopener noreferrer"
+                        <a href="https://github.com/cyclotruc/gitingest" target="_blank" rel="noopener noreferrer"
                             class="text-gray-900 hover:-translate-y-0.5 transition-transform flex items-center gap-1.5">
                             <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                                 <path fill-rule="evenodd"
@@ -83,7 +83,7 @@
                         <p class="text-gray-900">
                             We're working on making our API available to the public.
                             In the meantime, you can
-                            <a href="https://github.com/cyclotruc/gitdigest/issues/new" target="_blank"
+                            <a href="https://github.com/cyclotruc/gitingest/issues/new" target="_blank"
                                 rel="noopener noreferrer" class="text-[#6e5000] hover:underline">
                                 open an issue on github
                             </a>
@@ -114,7 +114,7 @@
     <script>
         async function fetchGitHubStars() {
             try {
-                const response = await fetch('https://api.github.com/repos/cyclotruc/gitdigest');
+                const response = await fetch('https://api.github.com/repos/cyclotruc/gitingest');
                 const data = await response.json();
                 const starCount = data.stargazers_count;
                 document.getElementById('github-stars').textContent = starCount;

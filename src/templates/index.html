@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" type="image/x-icon" href="/static/favicon.ico">
-    <title>Git digest</title>
+    <title>Git ingest</title>
 
     <!-- This is the correct way to include Tailwind CSS via CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -107,21 +107,21 @@
                 <div class="flex items-center gap-4">
                     <h1 class="text-2xl font-bold tracking-tight">
                         <a href="/" class="hover:opacity-80 transition-opacity">
-                            <span class="text-gray-900">Git</span><span class="text-[#fca847]">digest</span>
+                            <span class="text-gray-900">Git</span><span class="text-[#fca847]">ingest</span>
                         </a>
                     </h1>
                 </div>
 
                 <!-- Navigation with updated styling -->
                 <nav class="flex items-center space-x-6">
-                    <a href="https://github.com/cyclotruc/gitdigest/issues/new" target="_blank"
+                    <a href="https://github.com/cyclotruc/gitingest/issues/new" target="_blank"
                         rel="noopener noreferrer"
                         class="text-gray-900 hover:-translate-y-0.5 transition-transform flex items-center gap-1.5">
                         Suggest Feature
                     </a>
                     <a href="/api" class="text-gray-900 hover:-translate-y-0.5 transition-transform">API</a>
                     <div class="flex items-center gap-2">
-                        <a href="https://github.com/cyclotruc/gitdigest" target="_blank" rel="noopener noreferrer"
+                        <a href="https://github.com/cyclotruc/gitingest" target="_blank" rel="noopener noreferrer"
                             class="text-gray-900 hover:-translate-y-0.5 transition-transform flex items-center gap-1.5">
                             <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                                 <path fill-rule="evenodd"
@@ -173,7 +173,7 @@
                     </svg>
                 </div>
                 <p class="text-gray-600 text-lg max-w-2xl mx-auto text-center mt-8">
-                    Turn any GitHub repository into a simple text digest of its codebase.
+                    Turn any GitHub repository into a simple text ingest of its codebase.
                     This is useful for feeding a codebase into any LLM.
                 </p>
             </div>
@@ -194,7 +194,7 @@
 
                     <form method="post"
                         class="flex md:flex-row flex-col w-full h-full justify-center items-stretch space-y-5 md:space-y-0 md:space-x-5"
-                        id="digestForm" onsubmit="handleSubmit(event)">
+                        id="ingestForm" onsubmit="handleSubmit(event)">
                         <div class="relative w-full h-full">
                             <div
                                 class="w-full h-full rounded bg-gray-900 translate-y-1 translate-x-1 absolute inset-0 z-10">
@@ -218,9 +218,9 @@
                     <div class="mt-4">
                         <p class="opacity-70 mb-3">Try these example repositories:</p>
                         <div class="flex flex-wrap gap-2">
-                            <button onclick="submitExample('https://github.com/cyclotruc/gitdigest')"
+                            <button onclick="submitExample('https://github.com/cyclotruc/gitingest')"
                                 class="px-4 py-2 bg-[#FFFDF8] hover:bg-gray-100 text-gray-900 rounded transition-colors duration-200 border-[3px] border-gray-900 relative hover:-translate-y-px hover:-translate-x-px">
-                                Gitdigest
+                                Gitingest
                             </button>
                             <button onclick="submitExample('https://github.com/ollama/ollama')"
                                 class="px-4 py-2 bg-[#FFFDF8] hover:bg-gray-100 text-gray-900 rounded transition-colors duration-200 border-[3px] border-gray-900 relative hover:-translate-y-px hover:-translate-x-px">
@@ -262,12 +262,12 @@
                                         readonly>{{ summary }}</textarea>
                                 </div>
 
-                                {% if digest_id %}
+                                {% if ingest_id %}
                                 <div class="relative mt-4 inline-block group">
                                     <div
                                         class="w-full h-full rounded bg-gray-900 translate-y-1 translate-x-1 absolute inset-0">
                                     </div>
-                                    <a href="/download/{{ digest_id }}"
+                                    <a href="/download/{{ ingest_id }}"
                                         class="inline-flex items-center px-4 py-2 bg-[#ffc480] border-[3px] border-gray-900 text-gray-900 rounded group-hover:-translate-y-px group-hover:-translate-x-px transition-transform relative z-10">
                                         <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -362,7 +362,7 @@
         // Function to fetch GitHub stars
         async function fetchGitHubStars() {
             try {
-                const response = await fetch('https://api.github.com/repos/cyclotruc/gitdigest');
+                const response = await fetch('https://api.github.com/repos/cyclotruc/gitingest');
                 const data = await response.json();
                 const starCount = data.stargazers_count;
 

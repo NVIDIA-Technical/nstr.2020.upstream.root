@@ -33,7 +33,7 @@ load_dotenv()
 app = FastAPI()
 app.mount("/static", StaticFiles(directory="static"), name="static")
 app.add_middleware(Analytics, api_key=os.getenv('API_ANALYTICS_KEY'))
-app.add_middleware(TrustedHostMiddleware, allowed_hosts=["gitdigest.dev", "*.gitdigest.dev", "localhost"])
+app.add_middleware(TrustedHostMiddleware, allowed_hosts=["gitingest.com", "*.gitingest.com", "localhost"])
 templates = Jinja2Templates(directory="templates")
 
 
@@ -69,12 +69,12 @@ async def process_input(request: Request, input_text: str = Form(...)):
             }
         )
     
-    digest_id = str(uuid.uuid4())
-    with open(f"../tmp/digest-{digest_id}.txt", "w") as f:
+    ingest_id = str(uuid.uuid4())
+    with open(f"../tmp/ingest-{ingest_id}.txt", "w") as f:
         f.write(f"Summary:\n{summary}\n\nFile Tree:\n{tree}\n\nDetailed Content:\n{content}")
     
     if len(content) > MAX_DISPLAY_SIZE:
-        content = f"(Files content cropped to {MAX_DISPLAY_SIZE/1000000}M characters, download full digest to see more)\n" + content[:MAX_DISPLAY_SIZE]
+        content = f"(Files content cropped to {MAX_DISPLAY_SIZE/1000000}M characters, download full ingest to see more)\n" + content[:MAX_DISPLAY_SIZE]
         
     return templates.TemplateResponse(
         "index.html", 
@@ -85,20 +85,20 @@ async def process_input(request: Request, input_text: str = Form(...)):
             "tree": tree, 
             "content": content,
             "error_message": None,
-            "digest_id": digest_id
+            "ingest_id": ingest_id
         }
     )
 
-@app.get("/download/{digest_id}")
-async def download_digest(digest_id: str):
+@app.get("/download/{ingest_id}")
+async def download_ingest(ingest_id: str):
     try:
-        with open(f"../tmp/digest-{digest_id}.txt", "r") as f:
+        with open(f"../tmp/ingest-{ingest_id}.txt", "r") as f:
             content = f.read()
         return Response(
             content=content,
             media_type="text/plain",
             headers={
-                "Content-Disposition": f"attachment; filename=gitdigest-{digest_id[:8]}.txt"
+                "Content-Disposition": f"attachment; filename=gitingest-{ingest_id[:8]}.txt"
             }
         )
     except FileNotFoundError:
@@ -146,7 +146,7 @@ async def process_repo(
 def delete_repo(repo_id: str):
 
     os.system(f"rm -drf ../tmp/{repo_id}")
-    os.system(f"rm -f ../tmp/digest-{repo_id}")
+    os.system(f"rm -f ../tmp/ingest-{repo_id}")
 
 async def process_input(text: str) -> str:
     if not text.startswith("https://github.com/"):
