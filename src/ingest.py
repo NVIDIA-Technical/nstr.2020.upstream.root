@@ -6,6 +6,7 @@ DEFAULT_IGNORE_PATTERNS = [
     '*.pyc', '*.pyo', '*.pyd', '__pycache__',  # Python
     'node_modules', 'bower_components',        # JavaScript
     '.git', '.svn', '.hg', '.gitignore',      # Version control
+    '*.svg', '*.png', '*.jpg', '*.jpeg', '*.gif', # Images
     'venv', '.venv', 'env',                   # Virtual environments
     '.idea', '.vscode',                       # IDEs
     '*.log', '*.bak', '*.swp', '*.tmp',      # Temporary files
