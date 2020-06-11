@@ -1,7 +1,7 @@
 import asyncio
 import os
 from typing import Tuple
-from utils.decorators import async_timeout
+from .decorators import async_timeout
 
 def get_repo_id(repo_url: str) -> str:
     """Extract a unique identifier from a GitHub URL."""
@@ -35,6 +35,5 @@ async def clone_repo(repo_url: str, id: str) -> str:
         return f"Error cloning repository: {str(e)}"
 
 def delete_repo(repo_id: str):
-    """Delete a cloned repository and its associated files."""
     os.system(f"rm -drf ../tmp/{repo_id}")
     os.system(f"rm -f ../tmp/ingest-{repo_id}")

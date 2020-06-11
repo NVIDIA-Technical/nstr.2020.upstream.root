@@ -310,7 +310,8 @@
                     </div>
                 </div>
             </div>
-            {% else %}
+            {% endif %}
+            {% if loading %}
             <div class="relative mt-10">
                 <div class="w-full h-full absolute inset-0 bg-black rounded-xl translate-y-2 translate-x-2"></div>
                 <div class="bg-[#fafafa] rounded-xl border-[3px] border-gray-900 p-6 relative z-20 flex flex-col items-center space-y-4">
