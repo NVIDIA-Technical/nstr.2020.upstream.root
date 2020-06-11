@@ -30,7 +30,7 @@ load_dotenv()
 app = FastAPI()
 app.mount("/static", StaticFiles(directory="static"), name="static")
 app.add_middleware(Analytics, api_key=os.getenv('API_ANALYTICS_KEY'))
-app.add_middleware(TrustedHostMiddleware, allowed_hosts=["gitingest.com", "*.gitingest.com", "localhost"])
+app.add_middleware(TrustedHostMiddleware, allowed_hosts=["gitingest.com", "*.gitingest.com", "gitdigest.dev", "localhost"])
 templates = Jinja2Templates(directory="templates")
 
 
