@@ -67,7 +67,7 @@ async def process_input(request: Request, input_text: str = Form(...)):
         )
     
     if len(content) > MAX_DISPLAY_SIZE:
-        content = f"(Cropped to {MAX_DISPLAY_SIZE}M characters)\n" + content[:MAX_DISPLAY_SIZE]
+        content = f"(Cropped to {MAX_DISPLAY_SIZE/1000000}M characters)\n" + content[:MAX_DISPLAY_SIZE]
         
     return templates.TemplateResponse(
         "index.html", 
