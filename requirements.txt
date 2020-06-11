@@ -1,5 +1,4 @@
 tokencost
-codebase-digest
 fastapi[standard]
 uvicorn
 fastapi-analytics
