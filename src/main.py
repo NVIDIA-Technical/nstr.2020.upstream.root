@@ -102,23 +102,18 @@ async def download_digest(digest_id: str):
     except FileNotFoundError:
         raise HTTPException(status_code=404, detail="Digest not found")
 
-def sanitize_git_url(url: str) -> str:
-    if not url.startswith("https://github.com/"):
-        raise ValueError("Invalid GitHub URL. Please provide a valid GitHub repository URL.")
-    return url.split(" ")[0]
-
-
     
+def get_repo_id(repo_url: str) -> str:
+    if not repo_url.startswith("https://github.com/"):
+        raise ValueError("Invalid GitHub URL. Please provide a valid GitHub repository URL.")
+    repo_url = repo_url.split(" ")[0]
+    
+    id = repo_url.replace("https://github.com/", "").replace("/", "-")
+    return id
 
 
 @async_timeout(10)
-async def clone_repo(repo_url: str) -> str:
-
-    repo_url = sanitize_git_url(repo_url)
-    if not repo_url:
-        return None
-    
-    id = repo_url.replace("https://github.com/", "").replace("/", "-")
+async def clone_repo(repo_url: str, id: str) -> str:
     try:
         proc = await asyncio.create_subprocess_exec(
             "git",
@@ -154,8 +149,13 @@ def delete_repo(repo_id: str):
 async def process_input(text: str) -> str:
     if not text.startswith("https://github.com/"):
         return "Invalid GitHub URL. Please provide a valid GitHub repository URL."
-        
-    repo_id = await clone_repo(text)
+    
+    repo_id = get_repo_id(text)
+    if not repo_id:
+        return "Invalid GitHub URL. Please provide a valid GitHub repository URL."
+    
+    delete_repo(repo_id)
+    await clone_repo(text, repo_id)
     if not repo_id:
         return "Repository clone failed or timed out after 10 seconds."
         
