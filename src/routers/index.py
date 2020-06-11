@@ -8,27 +8,25 @@ from config import MAX_DISPLAY_SIZE
 
 
 
-def error_response(request: Request, error_message: str):
+router = APIRouter()
+templates = Jinja2Templates(directory="templates")
+
+EXAMPLE_REPOS = [
+    {"name": "Gitingest", "url": "https://github.com/cyclotruc/gitingest"},
+    {"name": "FastAPI", "url": "https://github.com/tiangolo/fastapi"},
+    {"name": "Django", "url": "https://github.com/django/django"},
+    {"name": "Flask", "url": "https://github.com/pallets/flask"},
+    {"name": "Linux", "url": "https://github.com/torvalds/linux"},
+    {"name": "Tldraw", "url": "https://github.com/tldraw/tldraw"},
+]
+
+@router.get("/", response_class=HTMLResponse)
+async def home(request: Request):
     return templates.TemplateResponse(
         "index.html", 
         {
             "request": request,
-            "error_message": error_message
-        }
-    )
-
-
-
-router = APIRouter()
-templates = Jinja2Templates(directory="templates")
-
-
-@router.get("/", response_class=HTMLResponse)
-async def read_root(request: Request):
-    return templates.TemplateResponse(
-        "index.html", {
-            "request": request, 
-            "result": None, 
+            "examples": EXAMPLE_REPOS
         }
     )
 
@@ -38,7 +36,14 @@ async def index_post(request: Request, input_text: str = Form(...)):
     try:
         summary, tree, content = await process_input(input_text)
     except Exception as e:
-        return error_response(request, f"Error processing repository: {e}")
+        return templates.TemplateResponse(
+            "index.html", 
+            {
+                "request": request,
+                "error_message": str(e),
+                "examples": EXAMPLE_REPOS
+            }
+        )
     
     ingest_id = str(uuid.uuid4())
     with open(f"../tmp/ingest-{ingest_id}.txt", "w") as f:
@@ -55,6 +60,7 @@ async def index_post(request: Request, input_text: str = Form(...)):
             "result": True, 
             "tree": tree, 
             "content": content,
+            "examples": EXAMPLE_REPOS,
             "error_message": None,
             "ingest_id": ingest_id
         }

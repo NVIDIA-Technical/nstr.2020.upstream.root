@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/x-icon" href="/static/favicon.ico">
+    <title>{% block title %}Git ingest{% endblock %}</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="/static/js/utils.js"></script>
+    {% block extra_head %}{% endblock %}
+</head>
+
+<body class="bg-[#FFFDF8] min-h-screen flex flex-col">
+    {% include 'components/navbar.html' %}
+
+    <!-- Main content wrapper -->
+    <main class="flex-1 w-full">
+        <div class="max-w-4xl mx-auto px-4 py-8">
+            {% block content %}{% endblock %}
+        </div>
+    </main>
+
+    {% include 'components/footer.html' %}
+    
+    {% block extra_scripts %}{% endblock %}
+</body>
+</html> 

@@ -79,12 +79,6 @@ function handleSubmit(event, showLoading = false) {
                 if (resultsSection) {
                     resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
                 }
-
-                // Check for error message in the response
-                const errorMessage = document.getElementById('error-message');
-                if (errorMessage) {
-                    showToast(errorMessage.dataset.message);
-                }
             }, 0);
         })
         .catch(error => {
