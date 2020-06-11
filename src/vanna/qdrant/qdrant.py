@@ -38,6 +38,16 @@ class Qdrant_VectorStore(VannaBase):
         TypeError: If config["client"] is not a `qdrant_client.QdrantClient` instance
     """
 
+    documentation_collection_name = "documentation"
+    ddl_collection_name = "ddl"
+    sql_collection_name = "sql"
+
+    id_suffixes = {
+        ddl_collection_name: "ddl",
+        documentation_collection_name: "doc",
+        sql_collection_name: "sql",
+    }
+
     def __init__(
         self,
         config={},
@@ -69,20 +79,14 @@ class Qdrant_VectorStore(VannaBase):
         self.collection_params = config.get("collection_params", {})
         self.distance_metric = config.get("distance_metric", models.Distance.COSINE)
         self.documentation_collection_name = config.get(
-            "documentation_collection_name", "documentation"
+            "documentation_collection_name", self.documentation_collection_name
         )
         self.ddl_collection_name = config.get(
-            "ddl_collection_name", "ddl"
+            "ddl_collection_name", self.ddl_collection_name
         )
         self.sql_collection_name = config.get(
-            "sql_collection_name", "sql"
+            "sql_collection_name", self.sql_collection_name
         )
-
-        self.id_suffixes = {
-            self.ddl_collection_name: "ddl",
-            self.documentation_collection_name: "doc",
-            self.sql_collection_name: "sql",
-        }
 
         self._setup_collections()
 
@@ -206,8 +210,7 @@ class Qdrant_VectorStore(VannaBase):
     def remove_training_data(self, id: str, **kwargs) -> bool:
         try:
             id, collection_name = self._parse_point_id(id)
-            res = self._client.delete(collection_name, points_selector=[id])
-            return True
+            self._client.delete(collection_name, points_selector=[id])
         except ValueError:
             return False
 
@@ -233,32 +236,32 @@ class Qdrant_VectorStore(VannaBase):
         return len(self.generate_embedding("ABCDEF"))
 
     def get_similar_question_sql(self, question: str, **kwargs) -> list:
-        results = self._client.query_points(
+        results = self._client.search(
             self.sql_collection_name,
-            query=self.generate_embedding(question),
+            query_vector=self.generate_embedding(question),
             limit=self.n_results,
             with_payload=True,
-        ).points
+        )
 
         return [dict(result.payload) for result in results]
 
     def get_related_ddl(self, question: str, **kwargs) -> list:
-        results = self._client.query_points(
+        results = self._client.search(
             self.ddl_collection_name,
-            query=self.generate_embedding(question),
+            query_vector=self.generate_embedding(question),
             limit=self.n_results,
             with_payload=True,
-        ).points
+        )
 
         return [result.payload["ddl"] for result in results]
 
     def get_related_documentation(self, question: str, **kwargs) -> list:
-        results = self._client.query_points(
+        results = self._client.search(
             self.documentation_collection_name,
-            query=self.generate_embedding(question),
+            query_vector=self.generate_embedding(question),
             limit=self.n_results,
             with_payload=True,
-        ).points
+        )
 
         return [result.payload["documentation"] for result in results]
 

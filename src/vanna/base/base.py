@@ -15,7 +15,7 @@ r"""
 
 # Open-Source and Extending
 
-Vanna.AI is open-source and extensible. If you'd like to use Vanna without the servers, see an example [here](https://vanna.ai/docs/postgres-ollama-chromadb/).
+Vanna.AI is open-source and extensible. If you'd like to use Vanna without the servers, see an example [here](/docs/local.html).
 
 The following is an example of where various functions are implemented in the codebase when using the default "local" version of Vanna. `vanna.base.VannaBase` is the base class which provides a `vanna.base.VannaBase.ask` and `vanna.base.VannaBase.train` function. Those rely on abstract methods which are implemented in the subclasses `vanna.openai_chat.OpenAI_Chat` and `vanna.chromadb_vector.ChromaDB_VectorStore`. `vanna.openai_chat.OpenAI_Chat` uses the OpenAI API to generate SQL and Plotly code. `vanna.chromadb_vector.ChromaDB_VectorStore` uses ChromaDB to store training data and generate embeddings.
 
@@ -79,10 +79,9 @@ class VannaBase(ABC):
         self.static_documentation = ""
         self.dialect = self.config.get("dialect", "SQL")
         self.language = self.config.get("language", None)
-        self.max_tokens = self.config.get("max_tokens", 14000)
 
     def log(self, message: str, title: str = "Info"):
-        print(f"{title}: {message}")
+        print(message)
 
     def _response_language(self) -> str:
         if self.language is None:
@@ -182,7 +181,7 @@ class VannaBase(ABC):
         """
 
         # If the llm_response contains a CTE (with clause), extract the last sql between WITH and ;
-        sqls = re.findall(r"\bWITH\b .*?;", llm_response, re.DOTALL)
+        sqls = re.findall(r"WITH.*?;", llm_response, re.DOTALL)
         if sqls:
             sql = sqls[-1]
             self.log(title="Extracted SQL", message=f"{sql}")
@@ -255,33 +254,6 @@ class VannaBase(ABC):
             return True
 
         return False
-
-    def generate_rewritten_question(self, last_question: str, new_question: str, **kwargs) -> str:
-        """
-        **Example:**
-        ```python
-        rewritten_question = vn.generate_rewritten_question("Who are the top 5 customers by sales?", "Show me their email addresses")
-        ```
-
-        Generate a rewritten question by combining the last question and the new question if they are related. If the new question is self-contained and not related to the last question, return the new question.
-
-        Args:
-            last_question (str): The previous question that was asked.
-            new_question (str): The new question to be combined with the last question.
-            **kwargs: Additional keyword arguments.
-
-        Returns:
-            str: The combined question if related, otherwise the new question.
-        """
-        if last_question is None:
-            return new_question
-
-        prompt = [
-            self.system_message("Your goal is to combine a sequence of questions into a singular question if they are related. If the second question does not relate to the first question and is fully self-contained, return the second question. Return just the new combined question with no additional explanations. The question should theoretically be answerable with a single SQL statement."),
-            self.user_message("First question: " + last_question + "\nSecond question: " + new_question),
-        ]
-
-        return self.submit_prompt(prompt=prompt, **kwargs)
 
     def generate_followup_questions(
         self, question: str, sql: str, df: pd.DataFrame, n_questions: int = 5, **kwargs
@@ -466,7 +438,7 @@ class VannaBase(ABC):
         pass
 
     @abstractmethod
-    def remove_training_data(self, id: str, **kwargs) -> bool:
+    def remove_training_data(id: str, **kwargs) -> bool:
         """
         Example:
         ```python
@@ -589,14 +561,14 @@ class VannaBase(ABC):
             "Please help to generate a SQL query to answer the question. Your response should ONLY be based on the given context and follow the response guidelines and format instructions. "
 
         initial_prompt = self.add_ddl_to_prompt(
-            initial_prompt, ddl_list, max_tokens=self.max_tokens
+            initial_prompt, ddl_list, max_tokens=14000
         )
 
         if self.static_documentation != "":
             doc_list.append(self.static_documentation)
 
         initial_prompt = self.add_documentation_to_prompt(
-            initial_prompt, doc_list, max_tokens=self.max_tokens
+            initial_prompt, doc_list, max_tokens=14000
         )
 
         initial_prompt += (
@@ -606,7 +578,6 @@ class VannaBase(ABC):
             "3. If the provided context is insufficient, please explain why it can't be generated. \n"
             "4. Please use the most relevant table(s). \n"
             "5. If the question has been asked and answered before, please repeat the answer exactly as it was given before. \n"
-            f"6. Ensure that the output SQL is {self.dialect}-compliant and executable, and free of syntax errors. \n"
         )
 
         message_log = [self.system_message(initial_prompt)]
@@ -634,15 +605,15 @@ class VannaBase(ABC):
         initial_prompt = f"The user initially asked the question: '{question}': \n\n"
 
         initial_prompt = self.add_ddl_to_prompt(
-            initial_prompt, ddl_list, max_tokens=self.max_tokens
+            initial_prompt, ddl_list, max_tokens=14000
         )
 
         initial_prompt = self.add_documentation_to_prompt(
-            initial_prompt, doc_list, max_tokens=self.max_tokens
+            initial_prompt, doc_list, max_tokens=14000
         )
 
         initial_prompt = self.add_sql_to_prompt(
-            initial_prompt, question_sql_list, max_tokens=self.max_tokens
+            initial_prompt, question_sql_list, max_tokens=14000
         )
 
         message_log = [self.system_message(initial_prompt)]
@@ -748,7 +719,6 @@ class VannaBase(ABC):
         database: str,
         role: Union[str, None] = None,
         warehouse: Union[str, None] = None,
-        **kwargs
     ):
         try:
             snowflake = __import__("snowflake.connector")
@@ -766,7 +736,7 @@ class VannaBase(ABC):
             else:
                 raise ImproperlyConfigured("Please set your Snowflake username.")
 
-        if password == "mypassword":
+        if password == "my-password":
             password_env = os.getenv("SNOWFLAKE_PASSWORD")
 
             if password_env is not None:
@@ -795,8 +765,7 @@ class VannaBase(ABC):
             password=password,
             account=account,
             database=database,
-            client_session_keep_alive=True,
-            **kwargs
+            client_session_keep_alive=True
         )
 
         def run_sql_snowflake(sql: str) -> pd.DataFrame:
@@ -822,13 +791,13 @@ class VannaBase(ABC):
         self.run_sql = run_sql_snowflake
         self.run_sql_is_set = True
 
-    def connect_to_sqlite(self, url: str, check_same_thread: bool = False,  **kwargs):
+    def connect_to_sqlite(self, url: str):
         """
         Connect to a SQLite database. This is just a helper function to set [`vn.run_sql`][vanna.base.base.VannaBase.run_sql]
 
         Args:
             url (str): The URL of the database to connect to.
-            check_same_thread (str): Allow the connection may be accessed in multiple threads.
+
         Returns:
             None
         """
@@ -847,11 +816,7 @@ class VannaBase(ABC):
             url = path
 
         # Connect to the database
-        conn = sqlite3.connect(
-            url,
-            check_same_thread=check_same_thread,
-            **kwargs
-        )
+        conn = sqlite3.connect(url, check_same_thread=False)
 
         def run_sql_sqlite(sql: str):
             return pd.read_sql_query(sql, conn)
@@ -867,9 +832,7 @@ class VannaBase(ABC):
         user: str = None,
         password: str = None,
         port: int = None,
-        **kwargs
     ):
-
         """
         Connect to postgres using the psycopg2 connector. This is just a helper function to set [`vn.run_sql`][vanna.base.base.VannaBase.run_sql]
         **Example:**
@@ -938,49 +901,30 @@ class VannaBase(ABC):
                 user=user,
                 password=password,
                 port=port,
-                **kwargs
             )
         except psycopg2.Error as e:
             raise ValidationError(e)
 
-        def connect_to_db():
-            return psycopg2.connect(host=host, dbname=dbname,
-                        user=user, password=password, port=port, **kwargs)
-
-
         def run_sql_postgres(sql: str) -> Union[pd.DataFrame, None]:
-            conn = None
-            try:
-                conn = connect_to_db()  # Initial connection attempt
-                cs = conn.cursor()
-                cs.execute(sql)
-                results = cs.fetchall()
+            if conn:
+                try:
+                    cs = conn.cursor()
+                    cs.execute(sql)
+                    results = cs.fetchall()
 
-                # Create a pandas dataframe from the results
-                df = pd.DataFrame(results, columns=[desc[0] for desc in cs.description])
-                return df
+                    # Create a pandas dataframe from the results
+                    df = pd.DataFrame(
+                        results, columns=[desc[0] for desc in cs.description]
+                    )
+                    return df
 
-            except psycopg2.InterfaceError as e:
-                # Attempt to reconnect and retry the operation
-                if conn:
-                    conn.close()  # Ensure any existing connection is closed
-                conn = connect_to_db()
-                cs = conn.cursor()
-                cs.execute(sql)
-                results = cs.fetchall()
-
-                # Create a pandas dataframe from the results
-                df = pd.DataFrame(results, columns=[desc[0] for desc in cs.description])
-                return df
-
-            except psycopg2.Error as e:
-                if conn:
+                except psycopg2.Error as e:
                     conn.rollback()
                     raise ValidationError(e)
 
-            except Exception as e:
-                        conn.rollback()
-                        raise e
+                except Exception as e:
+                    conn.rollback()
+                    raise e
 
         self.dialect = "PostgreSQL"
         self.run_sql_is_set = True
@@ -988,13 +932,12 @@ class VannaBase(ABC):
 
 
     def connect_to_mysql(
-        self,
-        host: str = None,
-        dbname: str = None,
-        user: str = None,
-        password: str = None,
-        port: int = None,
-        **kwargs
+            self,
+            host: str = None,
+            dbname: str = None,
+            user: str = None,
+            password: str = None,
+            port: int = None,
     ):
 
         try:
@@ -1038,22 +981,18 @@ class VannaBase(ABC):
         conn = None
 
         try:
-            conn = pymysql.connect(
-                host=host,
-                user=user,
-                password=password,
-                database=dbname,
-                port=port,
-                cursorclass=pymysql.cursors.DictCursor,
-                **kwargs
-            )
+            conn = pymysql.connect(host=host,
+                                   user=user,
+                                   password=password,
+                                   database=dbname,
+                                   port=port,
+                                   cursorclass=pymysql.cursors.DictCursor)
         except pymysql.Error as e:
             raise ValidationError(e)
 
         def run_sql_mysql(sql: str) -> Union[pd.DataFrame, None]:
             if conn:
                 try:
-                    conn.ping(reconnect=True)
                     cs = conn.cursor()
                     cs.execute(sql)
                     results = cs.fetchall()
@@ -1076,21 +1015,20 @@ class VannaBase(ABC):
         self.run_sql = run_sql_mysql
 
     def connect_to_clickhouse(
-        self,
-        host: str = None,
-        dbname: str = None,
-        user: str = None,
-        password: str = None,
-        port: int = None,
-        **kwargs
+            self,
+            host: str = None,
+            dbname: str = None,
+            user: str = None,
+            password: str = None,
+            port: int = None,
     ):
 
         try:
-            import clickhouse_connect
+            from clickhouse_driver import connect
         except ImportError:
             raise DependencyError(
                 "You need to install required dependencies to execute this method,"
-                " run command: \npip install clickhouse_connect"
+                " run command: \npip install clickhouse-driver"
             )
 
         if not host:
@@ -1126,14 +1064,12 @@ class VannaBase(ABC):
         conn = None
 
         try:
-            conn = clickhouse_connect.get_client(
-                host=host,
-                port=port,
-                username=user,
-                password=password,
-                database=dbname,
-                **kwargs
-            )
+            conn = connect(host=host,
+                                   user=user,
+                                   password=password,
+                                   database=dbname,
+                                   port=port,
+                                  )
             print(conn)
         except Exception as e:
             raise ValidationError(e)
@@ -1141,12 +1077,15 @@ class VannaBase(ABC):
         def run_sql_clickhouse(sql: str) -> Union[pd.DataFrame, None]:
             if conn:
                 try:
-                    result = conn.query(sql)
-                    results = result.result_rows
+                  cs = conn.cursor()
+                  cs.execute(sql)
+                  results = cs.fetchall()
 
-                    # Create a pandas dataframe from the results
-                    df = pd.DataFrame(results, columns=result.column_names)
-                    return df
+                  # Create a pandas dataframe from the results
+                  df = pd.DataFrame(
+                    results, columns=[desc[0] for desc in cs.description]
+                  )
+                  return df
 
                 except Exception as e:
                     raise e
@@ -1155,11 +1094,10 @@ class VannaBase(ABC):
         self.run_sql = run_sql_clickhouse
 
     def connect_to_oracle(
-        self,
-        user: str = None,
-        password: str = None,
-        dsn: str = None,
-        **kwargs
+    self,
+    user: str = None,
+    password: str = None,
+    dsn: str = None,
     ):
 
         """
@@ -1169,7 +1107,7 @@ class VannaBase(ABC):
         vn.connect_to_oracle(
         user="username",
         password="password",
-        dsn="host:port/sid",
+        dns="host:port/sid",
         )
         ```
         Args:
@@ -1212,8 +1150,7 @@ class VannaBase(ABC):
                 user=user,
                 password=password,
                 dsn=dsn,
-                **kwargs
-            )
+                )
         except oracledb.Error as e:
             raise ValidationError(e)
 
@@ -1245,12 +1182,7 @@ class VannaBase(ABC):
         self.run_sql_is_set = True
         self.run_sql = run_sql_oracle
 
-    def connect_to_bigquery(
-        self,
-        cred_file_path: str = None,
-        project_id: str = None,
-        **kwargs
-    ):
+    def connect_to_bigquery(self, cred_file_path: str = None, project_id: str = None):
         """
         Connect to gcs using the bigquery connector. This is just a helper function to set [`vn.run_sql`][vanna.base.base.VannaBase.run_sql]
         **Example:**
@@ -1312,11 +1244,7 @@ class VannaBase(ABC):
                 )
 
             try:
-                conn = bigquery.Client(
-                    project=project_id,
-                    credentials=credentials,
-                    **kwargs
-                )
+                conn = bigquery.Client(project=project_id, credentials=credentials)
             except:
                 raise ImproperlyConfigured(
                     "Could not connect to bigquery please correct credentials"
@@ -1324,16 +1252,22 @@ class VannaBase(ABC):
 
         def run_sql_bigquery(sql: str) -> Union[pd.DataFrame, None]:
             if conn:
-                job = conn.query(sql)
-                df = job.result().to_dataframe()
-                return df
+                try:
+                    job = conn.query(sql)
+                    df = job.result().to_dataframe()
+                    return df
+                except GoogleAPIError as error:
+                    errors = []
+                    for error in error.errors:
+                        errors.append(error["message"])
+                    raise errors
             return None
 
         self.dialect = "BigQuery SQL"
         self.run_sql_is_set = True
         self.run_sql = run_sql_bigquery
 
-    def connect_to_duckdb(self, url: str, init_sql: str = None, **kwargs):
+    def connect_to_duckdb(self, url: str, init_sql: str = None):
         """
         Connect to a DuckDB database. This is just a helper function to set [`vn.run_sql`][vanna.base.base.VannaBase.run_sql]
 
@@ -1371,7 +1305,7 @@ class VannaBase(ABC):
                         f.write(response.content)
 
         # Connect to the database
-        conn = duckdb.connect(path, **kwargs)
+        conn = duckdb.connect(path)
         if init_sql:
             conn.query(init_sql)
 
@@ -1382,7 +1316,7 @@ class VannaBase(ABC):
         self.run_sql = run_sql_duckdb
         self.run_sql_is_set = True
 
-    def connect_to_mssql(self, odbc_conn_str: str, **kwargs):
+    def connect_to_mssql(self, odbc_conn_str: str):
         """
         Connect to a Microsoft SQL Server database. This is just a helper function to set [`vn.run_sql`][vanna.base.base.VannaBase.run_sql]
 
@@ -1415,7 +1349,7 @@ class VannaBase(ABC):
 
         from sqlalchemy import create_engine
 
-        engine = create_engine(connection_url, **kwargs)
+        engine = create_engine(connection_url)
 
         def run_sql_mssql(sql: str):
             # Execute the SQL statement and return the result as a pandas DataFrame
@@ -1430,17 +1364,16 @@ class VannaBase(ABC):
         self.run_sql = run_sql_mssql
         self.run_sql_is_set = True
     def connect_to_presto(
-        self,
-        host: str,
-        catalog: str = 'hive',
-        schema: str = 'default',
-        user: str = None,
-        password: str = None,
-        port: int = None,
-        combined_pem_path: str = None,
-        protocol: str = 'https',
-        requests_kwargs: dict = None,
-        **kwargs
+      self,
+      host: str,
+      catalog: str = 'hive',
+      schema: str = 'default',
+      user: str = None,
+      password: str = None,
+      port: int = None,
+      combined_pem_path: str = None,
+      protocol: str = 'https',
+      requests_kwargs: dict = None
     ):
       """
         Connect to a Presto database using the specified parameters.
@@ -1513,8 +1446,7 @@ class VannaBase(ABC):
                                  schema=schema,
                                  port=port,
                                  protocol=protocol,
-                                 requests_kwargs=requests_kwargs,
-                                 **kwargs)
+                                 requests_kwargs=requests_kwargs)
       except presto.Error as e:
         raise ValidationError(e)
 
@@ -1547,14 +1479,13 @@ class VannaBase(ABC):
       self.run_sql = run_sql_presto
 
     def connect_to_hive(
-        self,
-        host: str = None,
-        dbname: str = 'default',
-        user: str = None,
-        password: str = None,
-        port: int = None,
-        auth: str = 'CUSTOM',
-        **kwargs
+      self,
+      host: str = None,
+      dbname: str = 'default',
+      user: str = None,
+      password: str = None,
+      port: int = None,
+      auth: str = 'CUSTOM'
     ):
       """
         Connect to a Hive database. This is just a helper function to set [`vn.run_sql`][vanna.base.base.VannaBase.run_sql]
@@ -1668,7 +1599,6 @@ class VannaBase(ABC):
         print_results: bool = True,
         auto_train: bool = True,
         visualize: bool = True,  # if False, will not generate plotly code
-        allow_llm_to_see_data: bool = False,
     ) -> Union[
         Tuple[
             Union[str, None],
@@ -1699,7 +1629,7 @@ class VannaBase(ABC):
             question = input("Enter a question: ")
 
         try:
-            sql = self.generate_sql(question=question, allow_llm_to_see_data=allow_llm_to_see_data)
+            sql = self.generate_sql(question=question)
         except Exception as e:
             print(e)
             return None, None, None
@@ -1713,7 +1643,7 @@ class VannaBase(ABC):
 
         if self.run_sql_is_set is False:
             print(
-                "If you want to run the SQL query, connect to a database first."
+                "If you want to run the SQL query, connect to a database first. See here: https://vanna.ai/docs/databases.html"
             )
 
             if print_results:

@@ -62,7 +62,7 @@ class VannaDefault(VannaDB_VectorStore):
 
     def submit_prompt(self, prompt, **kwargs) -> str:
         # JSON-ify the prompt
-        json_prompt = json.dumps(prompt, ensure_ascii=False)
+        json_prompt = json.dumps(prompt)
 
         params = [StringData(data=json_prompt)]
 
