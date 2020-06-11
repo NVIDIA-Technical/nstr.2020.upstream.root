@@ -13,17 +13,14 @@ import functools
 from typing import TypeVar, Callable, Any
 from ingest import analyze_codebase
 
-MAX_DISPLAY_SIZE = 1000000
+MAX_DISPLAY_SIZE = 300000
 
 T = TypeVar("T")
 def async_timeout(seconds: int = 10):
     def decorator(func: Callable[..., T]) -> Callable[..., T]:
         @functools.wraps(func)
         async def wrapper(*args, **kwargs) -> T:
-            try:
-                return await asyncio.wait_for(func(*args, **kwargs), timeout=seconds)
-            except asyncio.TimeoutError:
-                return None
+            return await asyncio.wait_for(func(*args, **kwargs), timeout=seconds)
         return wrapper
     return decorator
 
@@ -74,7 +71,7 @@ async def process_input(request: Request, input_text: str = Form(...)):
         f.write(f"Summary:\n{summary}\n\nFile Tree:\n{tree}\n\nDetailed Content:\n{content}")
     
     if len(content) > MAX_DISPLAY_SIZE:
-        content = f"(Files content cropped to {MAX_DISPLAY_SIZE/1000000}M characters, download full ingest to see more)\n" + content[:MAX_DISPLAY_SIZE]
+        content = f"(Files content cropped to {int(MAX_DISPLAY_SIZE/1000)}k characters, download full ingest to see more)\n" + content[:MAX_DISPLAY_SIZE]
         
     return templates.TemplateResponse(
         "index.html", 
@@ -113,9 +110,9 @@ def get_repo_id(repo_url: str) -> str:
     id = repo_url.replace("https://github.com/", "").replace("/", "-")
     return id
 
-
-@async_timeout(10)
+@async_timeout(20)
 async def clone_repo(repo_url: str, id: str) -> str:
+
     try:
         proc = await asyncio.create_subprocess_exec(
             "git",
@@ -130,14 +127,12 @@ async def clone_repo(repo_url: str, id: str) -> str:
         
         stdout, stderr = await proc.communicate()
         
-        if proc.returncode != 0:
-            return None
-            
         return id
     except Exception as e:
+        print(f"Clone failed with exception: {str(e)}")
         return f"Error cloning repository: {str(e)}"
 
-@async_timeout(15)  # Longer timeout for processing
+@async_timeout(10)  # Longer timeout for processing
 async def process_repo(
     repo_id: str,
 ):
@@ -180,30 +175,32 @@ async def favicon():
     return FileResponse('static/favicon.ico')
 
 
-@app.get("/{full_path:path}")
-async def catch_all(request: Request, full_path: str):
-    print("catch_all")
 
-    # Reconstruct GitHub URL
+def reconstruct_github_url(full_path: str) -> str:
     path_parts = full_path.split('/')
     
-    # Initialize variables
-    github_path = None
-    is_blob = False
-    
-    # Check for blob or tree patterns
-    if 'blob' in path_parts:
-        blob_index = path_parts.index('blob')
-        if len(path_parts) > blob_index + 2:  # Ensure there's content after blob/branch
-            github_path = '/'.join(path_parts[blob_index + 2:])
-            is_blob = True
-    elif 'tree' in path_parts:
-        tree_index = path_parts.index('tree')
-        if len(path_parts) > tree_index + 2:  # Ensure there's content after tree/branch
-            github_path = '/'.join(path_parts[tree_index + 2:])
     
     # Reconstruct the GitHub URL
     github_url = f"https://github.com/{path_parts[0]}/{path_parts[1]}"
+    return github_url
+
+@app.get("/{full_path:path}")
+async def catch_all(request: Request, full_path: str):
+    try:
+        github_url = reconstruct_github_url(full_path)
+    except Exception as e:
+        return templates.TemplateResponse(
+            "github.html", 
+            {
+                "request": request, 
+                "result": False, 
+                "github_url": full_path,
+                "summary": "", 
+                "tree": "", 
+                "content": "",
+                "error_message": f"Error processing repository {e}"
+            }
+        )
     
     # Return the template with loading state
     return templates.TemplateResponse(
@@ -227,12 +224,12 @@ async def process_github_path(request: Request, full_path: str, input_text: str 
             "github.html", 
             {
                 "request": request, 
-                "result": None, 
+                "result": False, 
                 "github_url": input_text,
                 "summary": "", 
                 "tree": "", 
                 "content": "",
-                "error_message": f"Error processing repository: {e}"
+                "error_message": f"Error processing repository {e}"
             }
         )
     
@@ -241,7 +238,7 @@ async def process_github_path(request: Request, full_path: str, input_text: str 
         f.write(f"Summary:\n{summary}\n\nFile Tree:\n{tree}\n\nDetailed Content:\n{content}")
     
     if len(content) > MAX_DISPLAY_SIZE:
-        content = f"(Files content cropped to {MAX_DISPLAY_SIZE/1000000}M characters, download full ingest to see more)\n" + content[:MAX_DISPLAY_SIZE]
+        content = f"(Files content cropped to {int(MAX_DISPLAY_SIZE/1000)}k characters, download full digest to see more)\n" + content[:MAX_DISPLAY_SIZE]
         
     return templates.TemplateResponse(
         "github.html", 
