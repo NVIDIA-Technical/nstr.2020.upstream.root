@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/x-icon" href="/static/favicon.ico">
+    <title>Git Digest</title>
+
+    <!-- This is the correct way to include Tailwind CSS via CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        function copyText(className) {
+            const textarea = document.querySelector('.' + className);
+            if (!textarea) return;
+
+            navigator.clipboard.writeText(textarea.value)
+                .then(() => showToast('Copied to clipboard!'))
+                .catch(err => showToast('Failed to copy'));
+        }
+
+        function showToast(message) {
+            const toast = document.createElement('div');
+            toast.className = 'fixed bottom-5 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white px-6 py-3 rounded-lg opacity-0 transition-opacity duration-300';
+            toast.textContent = message;
+            document.body.appendChild(toast);
+
+            setTimeout(() => toast.classList.add('opacity-100'), 10);
+
+            setTimeout(() => {
+                toast.classList.remove('opacity-100');
+                setTimeout(() => toast.remove(), 300);
+            }, 2000);
+        }
+
+        function submitExample(repoName) {
+            const input = document.getElementById('input_text');
+            input.value = repoName;
+            input.focus();
+        }
+
+        function handleSubmit(event) {
+            event.preventDefault();
+            const form = event.target;
+            const submitButton = form.querySelector('button[type="submit"]');
+            const originalContent = submitButton.innerHTML;
+
+            // Change button to loading state
+            submitButton.disabled = true;
+            submitButton.innerHTML = `
+                <svg class="animate-spin -ml-1 mr-2 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+            `;
+
+            // Submit the form
+            fetch(form.action, {
+                method: 'POST',
+                body: new FormData(form)
+            })
+                .then(response => response.text())
+                .then(html => {
+                    document.documentElement.innerHTML = html;
+                    // Check for error message in the response
+                    const errorMessage = document.getElementById('error-message');
+                    if (errorMessage) {
+                        showToast(errorMessage.dataset.message);
+                    }
+                })
+                .catch(error => {
+                    submitButton.disabled = false;
+                    submitButton.innerHTML = originalContent;
+                    showToast('Error processing request');
+                });
+        }
+    </script>
+</head>
+
+<body class="bg-gray-50 min-h-screen flex flex-col">
+    <!-- Sticky Header -->
+    <header class="sticky top-0 bg-white border-b border-gray-200 z-50">
+        <div class="max-w-4xl mx-auto px-4">
+            <div class="flex justify-between items-center h-16">
+                <!-- Logo -->
+                <h1 class="text-2xl font-bold text-gray-800">
+                    <span class="text-blue-600">Git</span>digest
+                </h1>
+
+                <!-- Navigation -->
+                <nav class="flex items-center space-x-6">
+                    <a href="/api" class="text-gray-600 hover:text-blue-600 transition-colors">API</a>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main content wrapper -->
+    <main class="flex-1 w-full">
+        <div class="max-w-4xl mx-auto px-4 py-8">
+            <div class="mb-12 text-center">
+                <h1 class="text-3xl font-bold text-gray-900 mb-4 max-w-2xl mx-auto">Prompt-friendly codebase</h1>
+                <p class="text-gray-600 text-lg max-w-2xl mx-auto">
+                    Turn any GitHub repository into a simple text digest of its codebase.
+                    This is useful for feeding a codebase into any LLM.
+                </p>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
+                <form method="post" class="flex flex-col sm:flex-row gap-4" id="digestForm"
+                    onsubmit="handleSubmit(event)">
+                    <input type="text" name="input_text" id="input_text" placeholder="https://github.com/..." required
+                        class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all">
+                    <button type="submit"
+                        class="px-6 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors duration-200 flex-shrink-0">
+                        Digest
+                    </button>
+                </form>
+                <div class="mt-4 flex flex-wrap gap-2">
+                    <button onclick="submitExample('https://github.com/kamilstanuch/codebase-digest')"
+                        class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors duration-200">
+                        Codebase-digest
+                    </button>
+                    <button onclick="submitExample('https://github.com/ollama/ollama')"
+                        class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors duration-200">
+                        Ollama
+                    </button>
+                    <button onclick="submitExample('https://github.com/pallets/flask')"
+                        class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors duration-200">
+                        Flask
+                    </button>
+                    <button onclick="submitExample('https://github.com/tailwindlabs/tailwindcss')"
+                        class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors duration-200">
+                        TailwindCSS
+                    </button>
+                    <button onclick="submitExample('https://github.com/langchain-ai/langchain-nextjs-template')"
+                        class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors duration-200">
+                        Langchain NextJS
+                    </button>
+
+
+                </div>
+            </div>
+
+            {% if result %}
+            <div class="bg-white rounded-xl shadow-lg p-6 relative space-y-6">
+                <!-- Summary and Directory Structure Columns -->
+                <div class="grid grid-cols-1 md:grid-cols-12 gap-6">
+                    <!-- Summary Column (30%) -->
+                    <div class="md:col-span-4">
+                        <h3 class="text-lg font-semibold text-gray-800 mb-4">Summary</h3>
+                        <textarea
+                            class="w-full h-[200px] p-4 bg-gray-50 border border-gray-200 rounded-lg font-mono text-sm resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            readonly>{{ summary }}</textarea>
+                    </div>
+
+                    <!-- Directory Structure Column (70%) -->
+                    <div class="md:col-span-8">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-lg font-semibold text-gray-800">Directory Structure</h3>
+                            <button onclick="copyText('directory-structure')"
+                                class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors duration-200 flex items-center gap-2">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
+                                </svg>
+                                Copy
+                            </button>
+                        </div>
+                        <textarea
+                            class="directory-structure w-full p-4 bg-gray-50 border border-gray-200 rounded-lg font-mono text-sm resize-y min-h-[200px] focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            readonly>{{ structure }}</textarea>
+                    </div>
+                </div>
+
+                <!-- Full Digest -->
+                <div>
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-lg font-semibold text-gray-800">Files Content</h3>
+                        <button onclick="copyText('result-text')"
+                            class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors duration-200 flex items-center gap-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
+                            </svg>
+                            Copy
+                        </button>
+                    </div>
+                    <textarea
+                        class="result-text w-full p-4 bg-gray-50 border border-gray-200 rounded-lg font-mono text-sm resize-y focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        style="min-height: {{ '600px' if content else 'calc(100vh-800px)' }};"
+                        readonly>{{ content }}</textarea>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="w-full border-t border-gray-200 mt-auto">
+        <div class="max-w-4xl mx-auto px-4 py-8">
+            <div class="flex flex-col sm:flex-row justify-between items-center text-gray-600 text-sm gap-4">
+                <div class="flex items-center gap-4">
+                    <a href="mailto:romain@coderamp.io" class="hover:text-blue-600">romain@coderamp.io</a>
+                    <a href="https://bsky.app/profile/yasbaltrine.bsky.social" target="_blank" rel="noopener noreferrer"
+                        class="flex items-center gap-1.5 hover:text-blue-600">
+                        @rom2
+                    </a>
+                </div>
+                <div>Using <a href="https://github.com/kamilstanuch/codebase-digest" target="_blank"
+                        rel="noopener noreferrer" class="text-blue-600 hover:text-blue-800">codebase-digest</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+</body>
+
+</html>

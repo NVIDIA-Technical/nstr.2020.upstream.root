@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/x-icon" href="/static/favicon.ico">
+    <title>Git Digest API</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-gray-50 min-h-screen flex flex-col">
+    <!-- Sticky Header -->
+    <header class="sticky top-0 bg-white border-b border-gray-200 z-50">
+        <div class="max-w-4xl mx-auto px-4">
+            <div class="flex justify-between items-center h-16">
+                <!-- Logo -->
+                <a href="/" class="text-2xl font-bold text-gray-800">
+                    <span class="text-blue-600">Git</span>digest
+                </a>
+
+                <!-- Navigation -->
+                <nav class="flex items-center space-x-6">
+                    <a href="/api" class="text-blue-600 hover:text-blue-800 transition-colors">API</a>
+                    <a href="https://github.com/romainbellande/gitdigest/issues/new" target="_blank"
+                        rel="noopener noreferrer" class="text-gray-600 hover:text-blue-600 transition-colors">
+                        Suggest feature
+                    </a>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main content wrapper -->
+    <main class="flex-1 w-full">
+        <div class="max-w-4xl mx-auto px-4 py-16">
+            <div class="bg-white rounded-xl shadow-lg p-8">
+                <h1 class="text-3xl font-bold text-gray-900 mb-4">API Documentation</h1>
+                <div class="prose prose-blue max-w-none">
+                    <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-6">
+                        <div class="flex">
+                            <div class="flex-shrink-0">
+                                <svg class="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd"
+                                        d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+                                        clip-rule="evenodd" />
+                                </svg>
+                            </div>
+                            <div class="ml-3">
+                                <p class="text-sm text-yellow-700">
+                                    The API is currently under development. Please check back later or subscribe to our
+                                    updates.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    <p class="text-gray-600">
+                        We're working on making our API available to the public. In the meantime, you can use our web
+                        interface or suggest features you'd like to see in the API.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="w-full border-t border-gray-200 mt-auto">
+        <div class="max-w-4xl mx-auto px-4 py-8">
+            <div class="flex flex-col sm:flex-row justify-between items-center text-gray-600 text-sm">
+                <div><a href="mailto:romain@coderamp.io" class="hover:text-blue-600">romain@coderamp.io</a></div>
+                <div>Using <a href="https://github.com/kamilstanuch/codebase-digest" target="_blank"
+                        rel="noopener noreferrer" class="text-blue-600 hover:text-blue-800">codebase-digest</a></div>
+            </div>
+        </div>
+    </footer>
+</body>
+
+</html>
