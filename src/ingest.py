@@ -129,11 +129,13 @@ def create_summary_string(result: Dict, files: List[Dict]) -> str:
     """Creates a summary string with file counts and content size."""
     total_size = sum(len(file["content"].encode('utf-8')) for file in files)
     size_kb = total_size / 1024
+    total_lines = sum(len(file["content"].splitlines()) for file in files)
     
     return (
         f"Files analyzed: {result['file_count']}\n"
         f"Directories analyzed: {result['dir_count']}\n"
         f"Actual text content size: {size_kb:.2f} KB\n"
+        f"Total lines of content: {total_lines:,}\n"
     )
 
 def create_tree_structure(node: Dict, prefix: str = "", is_last: bool = True) -> str:

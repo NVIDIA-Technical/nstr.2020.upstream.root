@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Request, Form
+from fastapi import FastAPI, Request, Form, Response, HTTPException
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
@@ -50,7 +50,6 @@ async def read_root(request: Request):
 
 @app.post("/", response_class=HTMLResponse)
 async def process_input(request: Request, input_text: str = Form(...)):
-
     try:
         summary, tree, content = await process_input(input_text)
     except Exception as e:
@@ -66,8 +65,13 @@ async def process_input(request: Request, input_text: str = Form(...)):
             }
         )
     
+    # Store the full content in session or temporary file
+    digest_id = str(uuid.uuid4())
+    with open(f"../tmp/digest-{digest_id}.txt", "w") as f:
+        f.write(f"Summary:\n{summary}\n\nFile Tree:\n{tree}\n\nDetailed Content:\n{content}")
+    
     if len(content) > MAX_DISPLAY_SIZE:
-        content = f"(Cropped to {MAX_DISPLAY_SIZE/1000000}M characters)\n" + content[:MAX_DISPLAY_SIZE]
+        content = f"(Files content cropped to {MAX_DISPLAY_SIZE/1000000}M characters, download full digest to see more)\n" + content[:MAX_DISPLAY_SIZE]
         
     return templates.TemplateResponse(
         "index.html", 
@@ -77,9 +81,26 @@ async def process_input(request: Request, input_text: str = Form(...)):
             "result": True, 
             "tree": tree, 
             "content": content,
-            "error_message": None
+            "error_message": None,
+            "digest_id": digest_id
         }
     )
+
+# Add new endpoint for downloading
+@app.get("/download/{digest_id}")
+async def download_digest(digest_id: str):
+    try:
+        with open(f"../tmp/digest-{digest_id}.txt", "r") as f:
+            content = f.read()
+        return Response(
+            content=content,
+            media_type="text/plain",
+            headers={
+                "Content-Disposition": f"attachment; filename=gitdigest-{digest_id[:8]}.txt"
+            }
+        )
+    except FileNotFoundError:
+        raise HTTPException(status_code=404, detail="Digest not found")
 
 def sanitize_git_url(url: str) -> str:
     if not url.startswith("https://github.com/"):
