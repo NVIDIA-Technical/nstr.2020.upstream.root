@@ -124,6 +124,7 @@ async def clone_repo(repo_url: str) -> str:
             "git",
             "clone",
             "--depth=1",
+            "--single-branch",
             repo_url,
             f"../tmp/{id}",
             stdout=asyncio.subprocess.PIPE,
