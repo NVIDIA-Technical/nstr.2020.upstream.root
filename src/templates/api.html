@@ -53,36 +53,8 @@
         </div>
     </main>
 
-    <!-- Footer -->
-    <footer class="w-full border-t-[3px] border-gray-900 mt-auto">
-        <div class="max-w-4xl mx-auto px-4 py-8">
-            <div class="flex justify-center items-center text-gray-900 text-sm">
-                <div class="flex items-center">
-                    made with ❤️ by
-                    <a href="https://bsky.app/profile/yasbaltrine.bsky.social" target="_blank" rel="noopener noreferrer"
-                        class="ml-1 hover:underline">
-                        @rom2
-                    </a>
-                </div>
-            </div>
-        </div>
-    </footer>
+    {% include 'components/footer.html' %}
 
-    <!-- Add GitHub stars script -->
-    <script>
-        async function fetchGitHubStars() {
-            try {
-                const response = await fetch('https://api.github.com/repos/cyclotruc/gitingest');
-                const data = await response.json();
-                const starCount = data.stargazers_count;
-                document.getElementById('github-stars').textContent = starCount;
-            } catch (error) {
-                console.error('Error fetching GitHub stars:', error);
-                document.getElementById('github-stars').parentElement.style.display = 'none';
-            }
-        }
-        fetchGitHubStars();
-    </script>
 </body>
 
 </html>

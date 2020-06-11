@@ -1,3 +1,24 @@
+<script>
+    // Function to fetch GitHub stars
+    async function fetchGitHubStars() {
+        try {
+            const response = await fetch('https://api.github.com/repos/cyclotruc/gitingest');
+            const data = await response.json();
+            const starCount = data.stargazers_count;
+
+            // Update the star count in the DOM
+            document.getElementById('github-stars').textContent = starCount;
+        } catch (error) {
+            console.error('Error fetching GitHub stars:', error);
+            // In case of error, hide the star count
+            document.getElementById('github-stars').parentElement.style.display = 'none';
+        }
+    }
+
+    // Fetch stars when page loads
+    fetchGitHubStars();
+</script>
+
 <header class="sticky top-0 bg-[#FFFDF8] border-b-[3px] border-gray-900 z-50">
     <div class="max-w-4xl mx-auto px-4">
         <div class="flex justify-between items-center h-16">
