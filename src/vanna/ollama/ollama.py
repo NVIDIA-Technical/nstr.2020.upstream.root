@@ -27,7 +27,9 @@ class Ollama(VannaBase):
     if ":" not in self.model:
       self.model += ":latest"
 
-    self.ollama_client = ollama.Client(self.host, timeout=Timeout(240.0))
+    self.ollama_timeout = config.get("ollama_timeout", 240.0)
+
+    self.ollama_client = ollama.Client(self.host, timeout=Timeout(self.ollama_timeout))
     self.keep_alive = config.get('keep_alive', None)
     self.ollama_options = config.get('options', {})
     self.num_ctx = self.ollama_options.get('num_ctx', 2048)
@@ -89,7 +91,7 @@ class Ollama(VannaBase):
       f"model={self.model},\n"
       f"options={self.ollama_options},\n"
       f"keep_alive={self.keep_alive}")
-    self.log(f"Prompt Content:\n{json.dumps(prompt)}")
+    self.log(f"Prompt Content:\n{json.dumps(prompt, ensure_ascii=False)}")
     response_dict = self.ollama_client.chat(model=self.model,
                                             messages=prompt,
                                             stream=False,
