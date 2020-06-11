@@ -116,29 +116,30 @@
                         Digest
                     </button>
                 </form>
-                <div class="mt-4 flex flex-wrap gap-2">
-                    <button onclick="submitExample('https://github.com/kamilstanuch/codebase-digest')"
-                        class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors duration-200">
-                        Codebase-digest
-                    </button>
-                    <button onclick="submitExample('https://github.com/ollama/ollama')"
-                        class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors duration-200">
-                        Ollama
-                    </button>
-                    <button onclick="submitExample('https://github.com/pallets/flask')"
-                        class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors duration-200">
-                        Flask
-                    </button>
-                    <button onclick="submitExample('https://github.com/tailwindlabs/tailwindcss')"
-                        class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors duration-200">
-                        TailwindCSS
-                    </button>
-                    <button onclick="submitExample('https://github.com/langchain-ai/langchain-nextjs-template')"
-                        class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors duration-200">
-                        Langchain NextJS
-                    </button>
-
-
+                <div class="bg-gray-50 rounded-lg p-4 mt-4">
+                    <p class="text-sm text-gray-500 mb-2">Example repositories:</p>
+                    <div class="flex flex-wrap gap-2">
+                        <button onclick="submitExample('https://github.com/cyclotruc/gitdigest')"
+                            class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors duration-200">
+                            Gitdigest
+                        </button>
+                        <button onclick="submitExample('https://github.com/ollama/ollama')"
+                            class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors duration-200">
+                            Ollama
+                        </button>
+                        <button onclick="submitExample('https://github.com/pallets/flask')"
+                            class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors duration-200">
+                            Flask
+                        </button>
+                        <button onclick="submitExample('https://github.com/tailwindlabs/tailwindcss')"
+                            class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors duration-200">
+                            TailwindCSS
+                        </button>
+                        <button onclick="submitExample('https://github.com/langchain-ai/langchain-nextjs-template')"
+                            class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors duration-200">
+                            Langchain NextJS
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -188,7 +189,7 @@
                     </div>
                     <textarea
                         class="result-text w-full p-4 bg-gray-50 border border-gray-200 rounded-lg font-mono text-sm resize-y focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        style="min-height: {{ '600px' if content else 'calc(100vh-800px)' }};"
+                        style="min-height: {{ '600px' if content else 'calc(100vh-800px)' }}"
                         readonly>{{ content }}</textarea>
                 </div>
             </div>
