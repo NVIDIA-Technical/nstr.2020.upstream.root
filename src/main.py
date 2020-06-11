@@ -205,88 +205,55 @@ async def catch_all(request: Request, full_path: str):
     # Reconstruct the GitHub URL
     github_url = f"https://github.com/{path_parts[0]}/{path_parts[1]}"
     
-    try:
-        summary, tree, content = await process_input(github_url)
-        
-        # Handle blob case - return only file content
-        if is_blob and github_path:
-            content_lines = content.split('\n')
-            file_content = ""
-            current_file = ""
-            capturing = False
-            
-            for line in content_lines:
-                if line.startswith("File: "):
-                    current_file = line[6:].strip()
-                    if current_file.endswith(github_path):
-                        capturing = True
-                    else:
-                        capturing = False
-                elif capturing and line.startswith("="):
-                    continue
-                elif capturing:
-                    file_content += line + "\n"
-                    
-            return templates.TemplateResponse(
-                "github.html",
-                {
-                    "request": request,
-                    "result": True,
-                    "summary": "",
-                    "tree": "",
-                    "content": file_content,
-                    "github_url": github_url
-                }
-            )
-            
-        # Handle tree case - analyze only subfolder
-        elif github_path:
-            filtered_content = ""
-            in_target_path = False
-            content_lines = content.split('\n')
-            
-            for line in content_lines:
-                if line.startswith("File: "):
-                    in_target_path = github_path in line
-                if in_target_path:
-                    filtered_content += line + "\n"
-                    
-            return templates.TemplateResponse(
-                "github.html",
-                {
-                    "request": request, 
-                    "result": True,
-                    "summary": summary,
-                    "tree": tree,
-                    "content": filtered_content,
-                    "github_url": github_url
-                }
-            )
-            
-    except Exception as e:
-        return templates.TemplateResponse(
-            "github.html",
-            {
-                "request": request,
-                "result": False,
-                "summary": "",
-                "tree": "",
-                "content": "",
-                "github_url": github_url,
-                "error_message": f"Error processing repository: {e}"
-            }
-        )
-    
-    # Default case - return full analysis
+    # Return the template with loading state
     return templates.TemplateResponse(
         "github.html",
         {
             "request": request,
-            "result": True,
+            "result": False,  # This triggers the loading state
+            "github_url": github_url,
+            "summary": "",
+            "tree": "",
+            "content": "",
+        }
+    )
+
+@app.post("/{full_path:path}", response_class=HTMLResponse)
+async def process_github_path(request: Request, full_path: str, input_text: str = Form(...)):
+    try:
+        summary, tree, content = await process_input(input_text)
+    except Exception as e:
+        return templates.TemplateResponse(
+            "github.html", 
+            {
+                "request": request, 
+                "result": None, 
+                "github_url": input_text,
+                "summary": "", 
+                "tree": "", 
+                "content": "",
+                "error_message": f"Error processing repository: {e}"
+            }
+        )
+    
+    ingest_id = str(uuid.uuid4())
+    with open(f"../tmp/ingest-{ingest_id}.txt", "w") as f:
+        f.write(f"Summary:\n{summary}\n\nFile Tree:\n{tree}\n\nDetailed Content:\n{content}")
+    
+    if len(content) > MAX_DISPLAY_SIZE:
+        content = f"(Files content cropped to {MAX_DISPLAY_SIZE/1000000}M characters, download full ingest to see more)\n" + content[:MAX_DISPLAY_SIZE]
+        
+    return templates.TemplateResponse(
+        "github.html", 
+        {
+            "request": request, 
             "summary": summary,
-            "tree": tree,
+            "result": True, 
+            "tree": tree, 
             "content": content,
-            "github_url": github_url
+            "github_url": input_text,
+            "error_message": None,
+            "ingest_id": ingest_id
         }
     )
 
