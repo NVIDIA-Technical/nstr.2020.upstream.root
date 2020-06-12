@@ -1,6 +1,6 @@
 from fastapi import FastAPI, Request
 from fastapi.templating import Jinja2Templates
-from fastapi.responses import HTMLResponse, FileResponse
+from fastapi.responses import HTMLResponse, FileResponse, Response
 from fastapi.staticfiles import StaticFiles
 import os
 from dotenv import load_dotenv
@@ -27,6 +27,15 @@ templates = Jinja2Templates(directory="templates")
 async def health_check():
     return {"status": "healthy"}
 
+@app.head("/")
+async def head_root():
+    """Mirror the headers and status code of the index page"""
+    return HTMLResponse(
+        content=None,
+        headers={
+            "content-type": "text/html; charset=utf-8"
+        }
+    )
     
 @app.get("/api/", response_class=HTMLResponse)
 @app.get("/api", response_class=HTMLResponse)
