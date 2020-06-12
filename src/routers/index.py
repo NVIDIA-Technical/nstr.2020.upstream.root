@@ -16,8 +16,8 @@ EXAMPLE_REPOS = [
     {"name": "FastAPI", "url": "https://github.com/tiangolo/fastapi"},
     {"name": "Ollama", "url": "https://github.com/ollama/ollama"},
     {"name": "Flask", "url": "https://github.com/pallets/flask"},
-    {"name": "Linux", "url": "https://github.com/torvalds/linux"},
     {"name": "Tldraw", "url": "https://github.com/tldraw/tldraw"},
+    {"name": "Linux", "url": "https://github.com/torvalds/linux"},
 ]
 
 @router.get("/", response_class=HTMLResponse)
