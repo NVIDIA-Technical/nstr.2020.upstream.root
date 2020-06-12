@@ -15,6 +15,7 @@ async def catch_all(request: Request, full_path: str):
         {
             "request": request,
             "github_url": f"https://github.com/{full_path}",
+            "loading": True,
             "default_file_size": 243
         }
     )
