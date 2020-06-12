@@ -1,5 +1,4 @@
 import asyncio
-import os
 
 from .decorators import async_timeout
 from config import CLONE_TIMEOUT
