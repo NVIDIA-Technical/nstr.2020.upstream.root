@@ -256,9 +256,6 @@ def create_tree_structure(query: dict, node: Dict, prefix: str = "", is_last: bo
     """Creates a tree-like string representation of the file structure."""
     
     tree = ""
-    # print("/".join(node['path'].split('/')[3:]))
-    # print(node.keys())
-    # print("===")
     if not node["name"]:
         node["name"] = query['slug']
 
@@ -343,7 +340,6 @@ def ingest_directory(path: str, query: dict) -> Dict:
 def ingest_from_query(query: dict) -> Dict:
     """Main entry point for analyzing a codebase directory or single file."""
     
-    print(query['max_file_size'])
     path = f"{query['local_path']}{query['subpath']}"
     if not os.path.exists(path):
         raise ValueError(f"{query['slug']} cannot be found")

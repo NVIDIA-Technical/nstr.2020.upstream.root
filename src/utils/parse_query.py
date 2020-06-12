@@ -88,6 +88,6 @@ def parse_query(input_text: str, slider_position: int, pattern_type: str, patter
         query['ignore_patterns'].extend(parsed_pattern)
         query['include_patterns'] = None
 
-
+    print(f"{query['slug']:<20} | {query['pattern_type']}[{pattern}] {int(query['max_file_size']/1024)}kb, \n{query['url']}")
     return query
 
