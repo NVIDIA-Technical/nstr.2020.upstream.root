@@ -17,6 +17,10 @@ app.add_middleware(Analytics, api_key=os.getenv('API_ANALYTICS_KEY'))
 app.add_middleware(TrustedHostMiddleware, allowed_hosts=["gitingest.com", "*.gitingest.com", "gitdigest.dev", "localhost"])
 templates = Jinja2Templates(directory="templates")
 
+@app.get("/health")
+async def health_check():
+    return {"status": "healthy"}
+
     
 @app.get("/api/", response_class=HTMLResponse)
 @app.get("/api", response_class=HTMLResponse)
