@@ -28,16 +28,6 @@ function copyText(className) {
         });
 }
 
-function validateGithubUrl(url) {
-    // Add https:// if missing
-    if (!url.startsWith('https://')) {
-        url = 'https://' + url;
-    }
-    
-    // Check if it's a valid GitHub URL
-    const githubPattern = /^https:\/\/github\.com\/[^\/]+\/[^\/]+/;
-    return githubPattern.test(url);
-}
 
 function handleSubmit(event, showLoading = false) {
     event.preventDefault();
@@ -47,38 +37,18 @@ function handleSubmit(event, showLoading = false) {
     const submitButton = form.querySelector('button[type="submit"]');
     if (!submitButton) return;
 
-    // Create new FormData from the form
     const formData = new FormData(form);
-
-    // Get the slider value and update formData with the converted value
     const slider = document.getElementById('file_size');
     if (slider) {
         formData.delete('max_file_size');
         formData.append('max_file_size', slider.value);
     }
 
-    // Get the input URL
-    const formData = new FormData(form);
-    const inputUrl = formData.get('input_text');
-    
-    // Validate URL
-    if (!validateGithubUrl(inputUrl)) {
-        const errorMessage = document.getElementById('error-message') || (() => {
-            const div = document.createElement('div');
-            div.id = 'error-message';
-            div.className = 'text-red-500 text-sm mt-2';
-            form.appendChild(div);
-            return div;
-        })();
-        errorMessage.textContent = 'Please enter a valid GitHub repository URL (e.g., github.com/user/repo)';
-        return;
-    }
 
     const originalContent = submitButton.innerHTML;
     const currentStars = document.getElementById('github-stars')?.textContent;
 
     if (showLoading) {
-        // Change button to loading state
         submitButton.disabled = true;
         submitButton.innerHTML = `
             <div class="flex items-center justify-center">

@@ -1,6 +1,14 @@
 import uuid
+import re
 
 from config import TMP_BASE_PATH
+
+def validate_github_url(url: str) -> bool:
+    if not url.startswith('https://'):
+        url = 'https://' + url
+        
+    github_pattern = r'^https://github\.com/[^/]+/[^/]+'
+    return bool(re.match(github_pattern, url))
 
 def parse_url(url: str, max_file_size: int) -> dict:
     parsed = {
@@ -15,18 +23,10 @@ def parse_url(url: str, max_file_size: int) -> dict:
         "max_file_size": int(max_file_size) * 1024
     }
     
-
-    
-    
-    if not url.startswith("https://"):
-        url = "https://" + url
-    
-    if not url.startswith("https://github.com/"):
+    if not validate_github_url(url):
         raise ValueError("Invalid GitHub URL. Please provide a valid GitHub repository URL.")
     
-    # Remove anything after the first space
     url = url.split(" ")[0]
-
     url = url.replace("https://github.com/", "")
     path_parts = url.split('/')
 
@@ -48,3 +48,4 @@ def parse_url(url: str, max_file_size: int) -> dict:
             
         parsed["subpath"] = "/" + "/".join(path_parts[4:])
     return parsed
+
