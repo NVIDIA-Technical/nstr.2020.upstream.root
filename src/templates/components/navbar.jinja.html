@@ -1,21 +1,24 @@
 <script>
-    // Function to fetch GitHub stars
+    function formatStarCount(count) {
+        if (count >= 1000) {
+            return (count / 1000).toFixed(1) + 'k';
+        }
+        return count.toString();
+    }
+
     async function fetchGitHubStars() {
         try {
             const response = await fetch('https://api.github.com/repos/cyclotruc/gitingest');
             const data = await response.json();
             const starCount = data.stargazers_count;
 
-            // Update the star count in the DOM
-            document.getElementById('github-stars').textContent = starCount;
+            document.getElementById('github-stars').textContent = formatStarCount(starCount);
         } catch (error) {
             console.error('Error fetching GitHub stars:', error);
-            // In case of error, hide the star count
             document.getElementById('github-stars').parentElement.style.display = 'none';
         }
     }
 
-    // Fetch stars when page loads
     fetchGitHubStars();
 </script>
 
