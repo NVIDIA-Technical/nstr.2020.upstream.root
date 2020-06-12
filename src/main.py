@@ -39,6 +39,9 @@ async def api_docs(request: Request):
 async def favicon():
     return FileResponse('static/favicon.ico')
 
+@app.get("/robots.txt")
+async def robots():
+    return FileResponse('robots.txt')
 
 app.include_router(index)
 app.include_router(download)
