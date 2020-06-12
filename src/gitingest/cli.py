@@ -37,7 +37,7 @@ def main(
 
         if not output:
             output = "digest.txt"
-        summary, tree, content = ingest(source, max_size, include_patterns, exclude_patterns, output=output)
+        summary, _, _ = ingest(source, max_size, include_patterns, exclude_patterns, output=output)
 
         click.echo(f"Analysis complete! Output written to: {output}")
         click.echo("\nSummary:")
