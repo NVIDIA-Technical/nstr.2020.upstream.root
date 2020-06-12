@@ -14,7 +14,7 @@ templates = Jinja2Templates(directory="templates")
 EXAMPLE_REPOS = [
     {"name": "Gitingest", "url": "https://github.com/cyclotruc/gitingest"},
     {"name": "FastAPI", "url": "https://github.com/tiangolo/fastapi"},
-    {"name": "Django", "url": "https://github.com/django/django"},
+    {"name": "Ollama", "url": "https://github.com/ollama/ollama"},
     {"name": "Flask", "url": "https://github.com/pallets/flask"},
     {"name": "Linux", "url": "https://github.com/torvalds/linux"},
     {"name": "Tldraw", "url": "https://github.com/tldraw/tldraw"},
