@@ -1,6 +1,7 @@
 import asyncio
 import shutil
 from typing import Union, List
+from pathlib import Path
 
 from .ingest_from_query import ingest_from_query
 from .clone import clone_repo
@@ -20,8 +21,8 @@ def ingest(source: str, max_file_size: int = 10 * 1024 * 1024, include_patterns:
 
         return summary, tree, content
     finally:
-        print("ATTEMPT TO CLEAN temporary directory", query['local_path'])
         # Clean up the temporary directory if it was created
         if query['url']:
-            print("Cleaning up temporary directory")
-            shutil.rmtree(query['local_path'], ignore_errors=True)
+            # Get parent directory two levels up from local_path (../tmp)
+            cleanup_path = str(Path(query['local_path']).parents[1])
+            shutil.rmtree(cleanup_path, ignore_errors=True)
