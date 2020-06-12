@@ -161,7 +161,6 @@ def ingest_from_query(query: dict, ignore_patterns: List[str] = DEFAULT_IGNORE_P
     """Main entry point for analyzing a codebase directory."""
     
     path = f"{query['local_path']}{query['subpath']}"
-    print(path)
     if not os.path.exists(path):
         raise ValueError(f"Path {path} does not exist")
         

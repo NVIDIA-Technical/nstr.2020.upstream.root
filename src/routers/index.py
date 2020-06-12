@@ -25,12 +25,11 @@ async def home(request: Request):
 @router.post("/", response_class=HTMLResponse)
 async def index_post(request: Request, input_text: str = Form(...)):
 
-    print(input_text)
     try:
         parsed_url = parse_url(input_text)
         summary, tree, content = await process_query(parsed_url)
     except Exception as e:
-        raise e
+        print(e)
         return templates.TemplateResponse(
             "index.html", 
             {

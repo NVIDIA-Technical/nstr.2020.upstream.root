@@ -41,5 +41,4 @@ def parse_url(url: str) -> dict:
         parsed["type"] = path_parts[2]
         parsed["branch"] = path_parts[3]
         parsed["subpath"] = "/" + "/".join(path_parts[4:])
-    print(parsed)
     return parsed
