@@ -158,18 +158,47 @@ def create_tree_structure(query: dict, node: Dict, prefix: str = "", is_last: bo
 
 
 def ingest_from_query(query: dict, ignore_patterns: List[str] = DEFAULT_IGNORE_PATTERNS, max_file_size: int = MAX_FILE_SIZE) -> Dict:
-    """Main entry point for analyzing a codebase directory."""
+    """Main entry point for analyzing a codebase directory or single file."""
     
     path = f"{query['local_path']}{query['subpath']}"
     if not os.path.exists(path):
         raise ValueError(f"{query['slug']} cannot be found, make sure the repository is public")
-        
     
-    nodes = scan_directory(path, ignore_patterns, query['local_path'])
-    files = extract_files_content(query, nodes, max_file_size)
-    summary = create_summary_string(query, nodes, files)
-    tree = "Directory structure:\n" + create_tree_structure(query, nodes)
-
-    files_content = create_file_content_string(files)
+    if query.get('type') == 'blob':
+        if not os.path.isfile(path):
+            raise ValueError(f"Path {path} is not a file")
+            
+        file_size = os.path.getsize(path)
+        is_text = is_text_file(path)
+        if not is_text:
+            raise ValueError(f"File {path} is not a text file")
+            
+        content = read_file_content(path)
+        if file_size > max_file_size:
+            content = "[Content ignored: file too large]"
+            
+        file_info = {
+            "path": path.replace(query['local_path'], ""),
+            "content": content,
+            "size": file_size
+        }
+        
+        summary = (
+            f"Repository: {query['user_name']}/{query['repo_name']}\n"
+            f"File: {os.path.basename(path)}\n"
+            f"Size: {file_size:,} bytes\n"
+            f"Lines: {len(content.splitlines()):,}\n"
+        )
+        
+        files_content = create_file_content_string([file_info])
+        tree = "Directory structure:\n└── " + os.path.basename(path)
+        return (summary, tree, files_content)
+    
+    else:
+        nodes = scan_directory(path, ignore_patterns, query['local_path'])
+        files = extract_files_content(query, nodes, max_file_size)
+        summary = create_summary_string(query, nodes, files)
+        tree = "Directory structure:\n" + create_tree_structure(query, nodes)
+        files_content = create_file_content_string(files)
     
     return (summary, tree, files_content)
