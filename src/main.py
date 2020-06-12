@@ -41,7 +41,7 @@ async def favicon():
 
 @app.get("/robots.txt")
 async def robots():
-    return FileResponse('robots.txt')
+    return FileResponse('static/robots.txt')
 
 app.include_router(index)
 app.include_router(download)
