@@ -16,11 +16,11 @@ def test_parse_url_invalid():
 
 def test_parse_query_basic():
     url = "https://github.com/user/repo"
-    result = parse_query(url, slider_position=50, pattern_type='ignore', pattern='*.txt')
+    result = parse_query(url, slider_position=50, pattern_type='exclude', pattern='*.txt')
     assert result["user_name"] == "user"
     assert result["repo_name"] == "repo"
     assert result["url"] == "https://github.com/user/repo"
-    assert result["pattern_type"] == "ignore"
+    assert result["pattern_type"] == "exclude"
     assert "*.txt" in result["ignore_patterns"]
 
 def test_parse_query_include_pattern():

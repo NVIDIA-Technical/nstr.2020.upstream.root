@@ -8,26 +8,25 @@ MAX_DIRECTORY_DEPTH = 20  # Maximum depth of directory traversal
 MAX_FILES = 10000  # Maximum number of files to process
 MAX_TOTAL_SIZE_BYTES = 500 * 1024 * 1024  # Total size limit
 
-
 def should_include(path: str, base_path: str, include_patterns: List[str]) -> bool:
-    # Remove base_path and any leading slashes to get relative path
+
     rel_path = path.replace(base_path, "").lstrip(os.sep)
     include = False
     
     for pattern in include_patterns:
-        pattern = pattern.lstrip(os.sep)
-        if pattern.endswith(os.sep):
-            pattern += "*"
-        
         if fnmatch(rel_path, pattern):
             include = True
         else:
             include = False
-    
-        
     return include
 
 def should_exclude(path: str, base_path: str, ignore_patterns: List[str]) -> bool:
+    rel_path = path.replace(base_path, "").lstrip(os.sep)
+    for pattern in ignore_patterns:
+        if pattern == '':
+            continue
+        if fnmatch(rel_path, pattern):
+            return True
     return False
 
 def is_safe_symlink(symlink_path: str, base_path: str) -> bool:
@@ -103,8 +102,8 @@ def scan_directory(path: str, query: dict, seen_paths: set = None, depth: int = 
         for item in os.listdir(path):
             item_path = os.path.join(path, item)
 
-            # if should_exclude(item_path, base_path, ignore_patterns):
-                # continue
+            if should_exclude(item_path, base_path, ignore_patterns):
+                continue
 
 
             is_file = os.path.isfile(item_path)
