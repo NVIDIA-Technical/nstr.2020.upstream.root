@@ -261,8 +261,8 @@ def create_tree_structure(query: dict, node: Dict, prefix: str = "", is_last: bo
 
     if node["name"]:
         current_prefix = "└── " if is_last else "├── "
-        tree += prefix + current_prefix + node["name"] + "\n"
-        
+        name = node["name"] + "/" if node["type"] == "directory" else node["name"]
+        tree += prefix + current_prefix + name + "\n"
     if node["type"] == "directory":
         # Adjust prefix only if we added a node name
         new_prefix = prefix + ("    " if is_last else "│   ") if node["name"] else prefix
