@@ -1,6 +1,14 @@
 import click
 import os
 from .ingest import analyze_codebase, DEFAULT_IGNORE_PATTERNS, MAX_FILE_SIZE
+import pathlib
+
+def normalize_pattern(pattern: str) -> str:
+    pattern = pattern.strip()
+    pattern = pattern.lstrip(os.sep)
+    if pattern.endswith(os.sep):
+        pattern += "*"
+    return pattern
 
 @click.command()
 @click.argument('path', type=click.Path(exists=True))
@@ -19,6 +27,17 @@ def main(path, output, max_size, ignore_pattern):
         if ignore_pattern:
             ignore_patterns.extend(ignore_pattern)
             
+        # Check for .gitignore and add its patterns
+        gitignore_path = os.path.join(abs_path, '.gitignore')
+        if os.path.exists(gitignore_path):
+            with open(gitignore_path, 'r') as f:
+                for line in f:
+                    line = line.strip()
+                    # Skip empty lines and comments
+                    if line and not line.startswith('#'):
+                        normalized_pattern = normalize_pattern(line)
+                        ignore_patterns.append(normalized_pattern)
+
         # If no output file specified, use repo name in current directory
         if output is None:
             output = f"{repo_name}.txt"
