@@ -11,7 +11,7 @@ templates = Jinja2Templates(directory="templates")
 @router.get("/{full_path:path}")
 async def catch_all(request: Request, full_path: str):
     return templates.TemplateResponse(
-        "github.jinja.html",
+        "github.jinja",
         {
             "request": request,
             "github_url": f"https://github.com/{full_path}",

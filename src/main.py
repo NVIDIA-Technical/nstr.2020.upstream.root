@@ -52,7 +52,7 @@ async def head_root():
 @app.get("/api", response_class=HTMLResponse)
 async def api_docs(request: Request):
     return templates.TemplateResponse(
-        "api.jinja.html", {"request": request}
+        "api.jinja", {"request": request}
     )
 
 @app.get('/favicon.ico')

@@ -13,7 +13,7 @@ templates = Jinja2Templates(directory="templates")
 
 async def process_query(request: Request, input_text: str, slider_position: int, pattern_type: str = "exclude", pattern: str = "", is_index: bool = False) -> str:
     
-    template = "index.jinja.html" if is_index else "github.jinja.html"
+    template = "index.jinja" if is_index else "github.jinja"
     try:
         query = parse_query(input_text, slider_position, pattern_type, pattern)
         await clone_repo(query)
