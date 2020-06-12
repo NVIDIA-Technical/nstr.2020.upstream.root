@@ -6,4 +6,4 @@ def logSliderToSize(position):
     minv = math.log(1)
     maxv = math.log(102400)
     
-    return round(math.exp(minv + (maxv - minv) * pow(position / maxp, 1.5)))
+    return round(math.exp(minv + (maxv - minv) * pow(position / maxp, 1.5))) * 1024

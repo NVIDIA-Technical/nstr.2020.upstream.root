@@ -1,7 +1,6 @@
 from ingest import ingest_from_query
 from utils.clone import clone_repo
-from utils.parse_url import parse_url
-from utils.log_convert import logSliderToSize
+from utils.parse_query import parse_query
 from typing import List
 from fastapi.templating import Jinja2Templates
 from fastapi import Request
@@ -11,29 +10,17 @@ from config import MAX_DISPLAY_SIZE, EXAMPLE_REPOS
 
 templates = Jinja2Templates(directory="templates")
 
-def parse_pattern(pattern: str) -> List[str]:
-    return pattern.split(",")
 
-
-async def process_query(request: Request, input_text: str, max_file_size: int, pattern_type: str = "exclude", pattern: str = "", is_index: bool = False) -> str:
-
-
-    template = "index.jinja.html" if is_index else "github.jinja.html"
-    slider_position = max_file_size
-    size_in_kb = logSliderToSize(max_file_size)
+async def process_query(request: Request, input_text: str, slider_position: int, pattern_type: str = "exclude", pattern: str = "", is_index: bool = False) -> str:
     
+    template = "index.jinja.html" if is_index else "github.jinja.html"
     try:
-        query = parse_url(input_text)
-        query["max_file_size"] = int(size_in_kb) * 1024
-        query["pattern_type"] = pattern_type
-        query["pattern"] = parse_pattern(pattern)
-        print(query["pattern"])
+        query = parse_query(input_text, slider_position, pattern_type, pattern)
         await clone_repo(query)
         summary, tree, content = ingest_from_query(query)
         with open(f"{query['local_path']}.txt", "w") as f:
             f.write(tree + "\n" + content)
     except Exception as e:
-        raise e
         return templates.TemplateResponse(
             template, 
             {

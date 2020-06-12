@@ -1,7 +1,9 @@
 import uuid
 import re
+from utils.log_convert import logSliderToSize
+from typing import List
 
-from config import TMP_BASE_PATH
+from config import TMP_BASE_PATH, DEFAULT_IGNORE_PATTERNS
 
 def validate_github_url(url: str) -> bool:
     if not url.startswith('https://'):
@@ -48,3 +50,26 @@ def parse_url(url: str) -> dict:
         parsed["subpath"] = "/" + "/".join(path_parts[4:])
     return parsed
 
+
+def parse_pattern(pattern: str) -> List[str]:
+    for p in pattern.split(","):
+        if not all(c.isalnum() or c in "-_./+*" for c in p.strip()):
+            raise ValueError(f"Pattern '{p}' contains invalid characters. Only alphanumeric characters, dash (-), underscore (_), dot (.), forward slash (/), plus (+), and asterisk (*) are allowed.")
+    return [p.strip() for p in pattern.split(",")]
+
+
+def parse_query(input_text: str, slider_position: int, pattern_type: str, pattern: str) -> dict:
+    query = parse_url(input_text)
+    query['max_file_size'] = logSliderToSize(slider_position)
+    query['pattern_type'] = pattern_type
+    parsed_pattern = parse_pattern(pattern)
+    if pattern_type == 'include':
+        query['include_patterns'] = parsed_pattern
+        query['ignore_patterns'] = DEFAULT_IGNORE_PATTERNS
+    else:
+        #this adds the patterns to the default ignore patterns
+        query['ignore_patterns'] = DEFAULT_IGNORE_PATTERNS + parsed_pattern
+        query['include_patterns'] = None
+
+
+    return query

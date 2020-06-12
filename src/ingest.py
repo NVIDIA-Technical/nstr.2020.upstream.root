@@ -1,5 +1,5 @@
 import os
-from pathlib import Path
+from fnmatch import fnmatch
 from config import DEFAULT_IGNORE_PATTERNS, MAX_FILE_SIZE
 from tokencost import count_string_tokens
 from typing import Dict, List, Union
@@ -8,48 +8,26 @@ MAX_DIRECTORY_DEPTH = 20  # Maximum depth of directory traversal
 MAX_FILES = 10000  # Maximum number of files to process
 MAX_TOTAL_SIZE_BYTES = 500 * 1024 * 1024  # Total size limit
 
-def should_ignore(path: str, base_path: str, ignore_patterns: List[str], include_patterns: List[str] = None) -> bool:
-    """Checks if a file or directory should be ignored based on patterns.
-    
-    Args:
-        path: Path to check
-        base_path: Root directory path for relative path calculations
-        ignore_patterns: List of patterns to ignore
-        include_patterns: Optional list of patterns to explicitly include
-        
-    Returns:
-        True if path should be ignored, False otherwise
-    """
-    path_obj = Path(path)
-    base_path_obj = Path(base_path)
-    name = path_obj.name
-    rel_path = path_obj.relative_to(base_path_obj).as_posix()  # Convert to forward slashes for consistency
-    is_dir = path_obj.is_dir()
 
-    print(f"name: {name}, rel_path: {rel_path}, is_dir: {is_dir}")
-    if include_patterns:
-        for pattern in include_patterns:
-            if pattern == "":
-                continue
-            pattern_obj = Path(pattern)
-            if len(pattern_obj.parts) > 1:  # Pattern contains path separators
-                if is_dir :
-                    return False
-            else:
-                if not is_dir and Path(name).match(pattern):
-                    return False
-        return True  # Ignore if doesn't match any include pattern
+def should_include(path: str, base_path: str, include_patterns: List[str]) -> bool:
+    # Remove base_path and any leading slashes to get relative path
+    rel_path = path.replace(base_path, "").lstrip(os.sep)
+    include = False
     
-    for pattern in ignore_patterns:
-        if pattern == "":
-                continue
-        pattern_obj = Path(pattern)
-        if len(pattern_obj.parts) > 1:  # Pattern contains path separators
-            if Path(rel_path).match(pattern):
-                return True
+    for pattern in include_patterns:
+        pattern = pattern.lstrip(os.sep)
+        if pattern.endswith(os.sep):
+            pattern += "*"
+        
+        if fnmatch(rel_path, pattern):
+            include = True
         else:
-            if Path(name).match(pattern):
-                return True
+            include = False
+    
+        
+    return include
+
+def should_exclude(path: str, base_path: str, ignore_patterns: List[str]) -> bool:
     return False
 
 def is_safe_symlink(symlink_path: str, base_path: str) -> bool:
@@ -72,15 +50,17 @@ def is_text_file(file_path: str) -> bool:
         return False
 
 def read_file_content(file_path: str) -> str:
-    """Reads the content of a file, handling potential encoding errors."""
     try:
         with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
             return f.read()
     except Exception as e:
         return f"Error reading file: {str(e)}"
     
-def scan_directory(path: str, ignore_patterns: List[str], base_path: str, include_patterns: List[str] = None, seen_paths: set = None, depth: int = 0, stats: Dict = None) -> Dict:
+def scan_directory(path: str, query: dict, seen_paths: set = None, depth: int = 0, stats: Dict = None) -> Dict:
     """Recursively analyzes a directory and its contents with safety limits."""
+
+  
+    
     if seen_paths is None:
         seen_paths = set()
     if stats is None:
@@ -111,16 +91,27 @@ def scan_directory(path: str, ignore_patterns: List[str], base_path: str, includ
         "children": [],
         "file_count": 0,
         "dir_count": 0,
-        "path": path
+        "path": path,
+        "ignore_content": False
     }
+
+    ignore_patterns = query['ignore_patterns']
+    base_path = query['local_path']
+    include_patterns = query['include_patterns']
 
     try:
         for item in os.listdir(path):
             item_path = os.path.join(path, item)
-            
-            if should_ignore(item_path, base_path, ignore_patterns, include_patterns):
-                print(f"--{"/".join(item_path.split('/')[4:])} because it matches ignore pattern")
-                continue
+
+            # if should_exclude(item_path, base_path, ignore_patterns):
+                # continue
+
+
+            is_file = os.path.isfile(item_path)
+            if is_file and query['pattern_type'] == 'include':
+                if not should_include(item_path, base_path, include_patterns):
+                    result["ignore_content"] = True
+                    continue
 
             # Handle symlinks
             if os.path.islink(item_path):
@@ -160,7 +151,7 @@ def scan_directory(path: str, ignore_patterns: List[str], base_path: str, includ
                     result["file_count"] += 1
                     
                 elif os.path.isdir(real_path):
-                    subdir = scan_directory(real_path, ignore_patterns, base_path, include_patterns, seen_paths, depth + 1, stats)
+                    subdir = scan_directory(real_path, query, seen_paths, depth + 1, stats)
                     if subdir and (not include_patterns or subdir["file_count"] > 0):
                         subdir["name"] = item
                         subdir["path"] = item_path
@@ -198,7 +189,7 @@ def scan_directory(path: str, ignore_patterns: List[str], base_path: str, includ
                 result["file_count"] += 1
                 
             elif os.path.isdir(item_path):
-                subdir = scan_directory(item_path, ignore_patterns, base_path, include_patterns, seen_paths, depth + 1, stats)
+                subdir = scan_directory(item_path, query, seen_paths, depth + 1, stats)
                 if subdir and (not include_patterns or subdir["file_count"] > 0):
                     result["children"].append(subdir)
                     result["size"] += subdir["size"]
@@ -219,7 +210,7 @@ def extract_files_content(query: dict, node: Dict, max_file_size: int, files: Li
     if node["type"] == "file" and node["content"] != "[Non-text file]":
         content = node["content"]
         if node["size"] > max_file_size:
-            content = "[Content ignored: file too large]"
+            content = None
             
         files.append({
             "path": node["path"].replace(query['local_path'], ""),
@@ -233,10 +224,13 @@ def extract_files_content(query: dict, node: Dict, max_file_size: int, files: Li
 
 def create_file_content_string(files: List[Dict]) -> str:
     """Creates a formatted string of file contents with separators."""
+    
     output = ""
     separator = "=" * 48 + "\n"
     
     for file in files:
+        if not file['content']:
+            continue
         output += separator
         output += f"File: {file['path']}\n"
         output += separator
@@ -259,12 +253,13 @@ def create_summary_string(query: dict, nodes: Dict, files: List[Dict], ) -> str:
     return summary
         
 
-
 def create_tree_structure(query: dict, node: Dict, prefix: str = "", is_last: bool = True) -> str:
     """Creates a tree-like string representation of the file structure."""
     
     tree = ""
-    # Only add the root node name if it's not an empty string
+    # print("/".join(node['path'].split('/')[3:]))
+    # print(node.keys())
+    # print("===")
     if not node["name"]:
         node["name"] = query['slug']
 
@@ -333,29 +328,28 @@ def ingest_single_file(path: str, query: dict) -> Dict:
         summary += f"\nEstimated tokens: {formatted_tokens}"
     return (summary, tree, files_content)
 
+def ingest_directory(path: str, query: dict) -> Dict:
+
+    nodes = scan_directory(path, query)
+    files = extract_files_content(query, nodes, query['max_file_size'])
+    summary = create_summary_string(query, nodes, files)
+    tree = "Directory structure:\n" + create_tree_structure(query, nodes)
+    files_content = create_file_content_string(files)
+
+    formatted_tokens = generate_token_string(tree + files_content)
+    if formatted_tokens:
+        summary += f"\nEstimated tokens: {formatted_tokens}"
+    return (summary, tree, files_content)
 
 def ingest_from_query(query: dict) -> Dict:
     """Main entry point for analyzing a codebase directory or single file."""
     
-    ignore_patterns = DEFAULT_IGNORE_PATTERNS + query['pattern'] if query['pattern_type'] == 'exclude' else DEFAULT_IGNORE_PATTERNS
-    include_patterns = query['pattern'] if query['pattern_type'] == 'include' else None
-
-    print(include_patterns)
+    print(query['max_file_size'])
     path = f"{query['local_path']}{query['subpath']}"
     if not os.path.exists(path):
-        raise ValueError(f"{query['slug']} cannot be found, make sure the repository is public")
+        raise ValueError(f"{query['slug']} cannot be found")
     
     if query.get('type') == 'blob':
         return ingest_single_file(path, query)
     else:
-        nodes = scan_directory(path, ignore_patterns, query['local_path'], include_patterns)
-        files = extract_files_content(query, nodes, query['max_file_size'])
-        summary = create_summary_string(query, nodes, files)
-        tree = "Directory structure:\n" + create_tree_structure(query, nodes)
-        files_content = create_file_content_string(files)
-
-        formatted_tokens = generate_token_string(tree + files_content)
-        if formatted_tokens:
-            summary += f"\nEstimated tokens: {formatted_tokens}"
-
-    return (summary, tree, files_content)
+        return ingest_directory(path, query)
