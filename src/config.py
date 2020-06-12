@@ -30,7 +30,6 @@ DEFAULT_IGNORE_PATTERNS = [
 EXAMPLE_REPOS = [
     {"name": "Gitingest", "url": "https://github.com/cyclotruc/gitingest"},
     {"name": "FastAPI", "url": "https://github.com/tiangolo/fastapi"},
-    {"name": "Ollama", "url": "https://github.com/ollama/ollama"},
     {"name": "Flask", "url": "https://github.com/pallets/flask"},
     {"name": "Tldraw", "url": "https://github.com/tldraw/tldraw"},
     {"name": "ApiAnalytics", "url": "https://github.com/tom-draper/api-analytics"},
