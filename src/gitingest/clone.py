@@ -13,7 +13,6 @@ async def check_repo_exists(url: str) -> bool:
         stdout=asyncio.subprocess.PIPE,
         stderr=asyncio.subprocess.PIPE,
     )
-    print("Checking if repo exists")
     stdout, stderr = await proc.communicate()
     if proc.returncode != 0:
         return False
