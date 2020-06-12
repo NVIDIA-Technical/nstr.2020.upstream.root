@@ -14,7 +14,6 @@ class CloneConfig:
     branch: str | None = None
 
 
-
 async def check_repo_exists(url: str) -> bool:
     """
     Check if a repository exists at the given URL using an HTTP HEAD request.
@@ -45,7 +44,6 @@ async def check_repo_exists(url: str) -> bool:
 
 
 async def run_git_command(*args: str) -> tuple[bytes, bytes]:
-
     """
     Executes a git command asynchronously and captures its output.
 
@@ -110,7 +108,6 @@ async def clone_repo(config: CloneConfig) -> tuple[bytes, bytes]:
     local_path: str = config.local_path
     commit: str | None = config.commit
     branch: str | None = config.branch
-
 
     if not url:
         raise ValueError("The 'url' parameter is required.")
