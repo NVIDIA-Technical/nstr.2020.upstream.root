@@ -1,9 +1,7 @@
 import os
-from typing import Optional, Tuple
 
 import click
 
-from gitingest.ignore_patterns import DEFAULT_IGNORE_PATTERNS
 from gitingest.ingest import ingest
 from gitingest.ingest_from_query import MAX_FILE_SIZE
 
@@ -17,17 +15,17 @@ def normalize_pattern(pattern: str) -> str:
 
 
 @click.command()
-@click.argument('source', type=str, required=True)
-@click.option('--output', '-o', default=None, help='Output file path (default: <repo_name>.txt in current directory)')
-@click.option('--max-size', '-s', default=MAX_FILE_SIZE, help='Maximum file size to process in bytes')
-@click.option('--exclude-pattern', '-e', multiple=True, help='Patterns to exclude')
-@click.option('--include-pattern', '-i', multiple=True, help='Patterns to include')
+@click.argument("source", type=str, required=True)
+@click.option("--output", "-o", default=None, help="Output file path (default: <repo_name>.txt in current directory)")
+@click.option("--max-size", "-s", default=MAX_FILE_SIZE, help="Maximum file size to process in bytes")
+@click.option("--exclude-pattern", "-e", multiple=True, help="Patterns to exclude")
+@click.option("--include-pattern", "-i", multiple=True, help="Patterns to include")
 def main(
     source: str,
-    output: Optional[str],
+    output: str | None,
     max_size: int,
-    exclude_pattern: Tuple[str, ...],
-    include_pattern: Tuple[str, ...],
+    exclude_pattern: tuple[str, ...],
+    include_pattern: tuple[str, ...],
 ) -> None:
     """Analyze a directory and create a text dump of its contents."""
     try:
@@ -48,5 +46,5 @@ def main(
         raise click.Abort()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
