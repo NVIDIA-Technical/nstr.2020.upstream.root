@@ -1,19 +1,35 @@
 
-def reconstruct_github_url(full_path: str) -> str:
-    path_parts = full_path.split('/')
+def parse_url(url: str) -> dict:
+    parsed = {
+        "url": None,
+        "user_name": None,
+        "repo_name": None,
+        "tree": False,
+        "branch": None,
+        "path": "/",
+    }
     
     
-    # Reconstruct the GitHub URL
-    github_url = f"https://github.com/{path_parts[0]}/{path_parts[1]}"
-    return github_url
-
-
-
-def id_from_repo_url(repo_url: str) -> str:
-    """Extract a unique identifier from a GitHub URL."""
-    if not repo_url.startswith("https://github.com/"):
+    if not url.startswith("https://github.com/"):
         raise ValueError("Invalid GitHub URL. Please provide a valid GitHub repository URL.")
-    repo_url = repo_url.split(" ")[0]
     
-    id = repo_url.replace("https://github.com/", "").replace("/", "-")
-    return id
+    
+    
+    # Remove anything after the first space
+    url = url.split(" ")[0]
+
+    url = url.replace("https://github.com/", "")
+    path_parts = url.split('/')
+
+    parsed["user_name"] = path_parts[0]
+    parsed["repo_name"] = path_parts[1]
+
+    parsed["url"] = f"https://github.com/{parsed['user_name']}/{parsed['repo_name']}"
+    parsed['id'] = parsed["url"].replace("https://github.com/", "").replace("/", "-")
+
+    if len(path_parts) > 2:
+        if path_parts[2] == "tree":
+            parsed["tree"] = True
+            parsed["path"] = "/".join(path_parts[3:])
+    print(parsed)
+    return parsed

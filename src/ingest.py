@@ -1,7 +1,7 @@
 import os
 import fnmatch
 from typing import Dict, List, Union
-from config import DEFAULT_IGNORE_PATTERNS
+from config import DEFAULT_IGNORE_PATTERNS, MAX_FILE_SIZE, TMP_BASE_PATH
 
 def should_ignore(path: str, base_path: str, ignore_patterns: List[str]) -> bool:
     """Checks if a file or directory should be ignored based on patterns."""
@@ -30,7 +30,7 @@ def read_file_content(file_path: str) -> str:
             return f.read()
     except Exception as e:
         return f"Error reading file: {str(e)}"
-
+    
 def analyze_directory(path: str, ignore_patterns: List[str], base_path: str) -> Dict:
     """Recursively analyzes a directory and its contents."""
     result = {
@@ -79,6 +79,7 @@ def analyze_directory(path: str, ignore_patterns: List[str], base_path: str) -> 
 
     return result
 
+
 def get_all_files(node: Dict, max_file_size: int, files: List = None) -> List[Dict]:
     """Recursively collects all text files with their contents."""
     if files is None:
@@ -90,7 +91,7 @@ def get_all_files(node: Dict, max_file_size: int, files: List = None) -> List[Di
             content = "[Content ignored: file too large]"
             
         files.append({
-            "path": node["path"],
+            "path": node["path"].replace(TMP_BASE_PATH, ""),
             "content": content,
             "size": node["size"]
         })
@@ -114,28 +115,17 @@ def create_file_content_string(files: List[Dict]) -> str:
 
 def create_summary_string(result: Dict, files: List[Dict]) -> str:
     """Creates a summary string with file counts and content size."""
-    total_size = sum(len(file["content"].encode('utf-8')) for file in files)
-    size_kb = total_size / 1024
     total_lines = sum(len(file["content"].splitlines()) for file in files)
     
     return (
         f"Files analyzed: {result['file_count']}\n"
         f"Directories analyzed: {result['dir_count']}\n"
-        f"Actual text content size: {size_kb:.2f} KB\n"
         f"Total lines of content: {total_lines:,}\n"
     )
 
 def create_tree_structure(node: Dict, prefix: str = "", is_last: bool = True) -> str:
-    """Creates a tree-like string representation of the file structure.
+    """Creates a tree-like string representation of the file structure."""
     
-    Args:
-        node: Dictionary containing file/directory information
-        prefix: Current line prefix for formatting
-        is_last: Boolean indicating if this is the last item in current level
-        
-    Returns:
-        String representation of the tree structure
-    """
     tree = ""
     current_prefix = "└── " if is_last else "├── "
     tree += prefix + current_prefix + node["name"] + "\n"
@@ -148,23 +138,20 @@ def create_tree_structure(node: Dict, prefix: str = "", is_last: bool = True) ->
     
     return tree
 
-def analyze_codebase(path: str, digest_id: str, ignore_patterns: List[str] = None, max_file_size: int = 10000000) -> Dict:
+
+def ingest_from_path(id: str, ignore_patterns: List[str] = DEFAULT_IGNORE_PATTERNS, max_file_size: int = MAX_FILE_SIZE, base_path: str = TMP_BASE_PATH) -> Dict:
     """Main entry point for analyzing a codebase directory."""
+    
+    path = f"{base_path}/{id}"
     if not os.path.exists(path):
         raise ValueError(f"Path {path} does not exist")
         
-    patterns = ignore_patterns if ignore_patterns is not None else DEFAULT_IGNORE_PATTERNS
-    result = analyze_directory(path, patterns, path)
-    repo_name = os.path.basename(os.path.abspath(path))
     
-    files = get_all_files(result, max_file_size)
-    summary = create_summary_string(result, files)
-
-    tree = "Directory Structure:\n" + create_tree_structure(result)
+    nodes = analyze_directory(path, ignore_patterns, base_path)
+    files = get_all_files(nodes, max_file_size)
+    summary = create_summary_string(nodes, files)
+    tree = create_tree_structure(nodes)
 
     formatted_content = create_file_content_string(files)
-    
-    
-    
     
     return (summary, tree, formatted_content)
