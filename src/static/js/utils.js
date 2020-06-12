@@ -178,4 +178,22 @@ window.copyText = copyText;
 
 window.handleSubmit = handleSubmit;
 window.initializeSlider = initializeSlider;
-window.formatSize = formatSize; 
+window.formatSize = formatSize;
+
+// Add this new function
+function setupGlobalEnterHandler() {
+    document.addEventListener('keydown', function (event) {
+        if (event.key === 'Enter' && !event.target.matches('textarea')) {
+            const form = document.getElementById('ingestForm');
+            if (form) {
+                handleSubmit(new Event('submit'), true);
+            }
+        }
+    });
+}
+
+// Add to the DOMContentLoaded event listener
+document.addEventListener('DOMContentLoaded', () => {
+    initializeSlider();
+    setupGlobalEnterHandler();
+});
