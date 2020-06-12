@@ -1,7 +1,8 @@
 import os
 import fnmatch
-from typing import Dict, List, Union
 from config import DEFAULT_IGNORE_PATTERNS, MAX_FILE_SIZE
+from tokencost import count_string_tokens
+from typing import Dict, List, Union
 
 def should_ignore(path: str, base_path: str, ignore_patterns: List[str]) -> bool:
     """Checks if a file or directory should be ignored based on patterns."""
@@ -115,12 +116,10 @@ def create_file_content_string(files: List[Dict]) -> str:
 
 def create_summary_string(query: dict, nodes: Dict, files: List[Dict], ) -> str:
     """Creates a summary string with file counts and content size."""
-    total_lines = sum(len(file["content"].splitlines()) for file in files)
 
     summary = f"Repository: {query['user_name']}/{query['repo_name']}\n"
     summary += f"Files analyzed: {nodes['file_count']}\n"
-    summary += f"Directories analyzed: {nodes['dir_count']}\n"
-    summary += f"Total lines of content: {total_lines:,}\n"
+    
     if query['subpath'] != '/':
         summary += f"Subpath: {query['subpath']}\n"
     if query['commit']:
@@ -152,6 +151,14 @@ def create_tree_structure(query: dict, node: Dict, prefix: str = "", is_last: bo
     
     return tree
 
+def generate_token_string(context_string: str) -> str:
+    formatted_tokens = ""
+    total_gpt_tokens = count_string_tokens(prompt=context_string, model="gpt-4o")
+    if total_gpt_tokens > 1000000:  
+        formatted_tokens = f"{total_gpt_tokens/1000000:.1f}M"
+    elif total_gpt_tokens > 1000:
+        formatted_tokens = f"{total_gpt_tokens/1000:.1f}k"
+    return f"{total_gpt_tokens}"
 
 def ingest_from_query(query: dict, ignore_patterns: List[str] = DEFAULT_IGNORE_PATTERNS, max_file_size: int = MAX_FILE_SIZE) -> Dict:
     """Main entry point for analyzing a codebase directory or single file."""
@@ -186,8 +193,15 @@ def ingest_from_query(query: dict, ignore_patterns: List[str] = DEFAULT_IGNORE_P
             f"Lines: {len(content.splitlines()):,}\n"
         )
         
+        
+        
         files_content = create_file_content_string([file_info])
         tree = "Directory structure:\n└── " + os.path.basename(path)
+
+
+        print(files_content)
+        formatted_tokens = generate_token_string(files_content)
+        summary += f"\nEstimated tokens: {formatted_tokens}"
         return (summary, tree, files_content)
     
     else:
@@ -196,5 +210,13 @@ def ingest_from_query(query: dict, ignore_patterns: List[str] = DEFAULT_IGNORE_P
         summary = create_summary_string(query, nodes, files)
         tree = "Directory structure:\n" + create_tree_structure(query, nodes)
         files_content = create_file_content_string(files)
+
+
+        formatted_tokens = generate_token_string(tree + files_content)
+        summary += f"\nEstimated tokens: {formatted_tokens}"
+        
+
+
+
     
     return (summary, tree, files_content)
