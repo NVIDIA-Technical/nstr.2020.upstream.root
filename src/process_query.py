@@ -29,6 +29,8 @@ async def process_query(request: Request, input_text: str, slider_position: int,
                 "error_message": f"Error: {e}",
                 "examples": EXAMPLE_REPOS if is_index else [],
                 "default_file_size": slider_position,
+                "pattern_type": pattern_type,
+                "pattern": pattern,
             }
         )
     
@@ -46,6 +48,8 @@ async def process_query(request: Request, input_text: str, slider_position: int,
             "content": content,
             "examples": EXAMPLE_REPOS if is_index else [],
             "ingest_id": query['id'],
-            "default_file_size": slider_position,  
+            "default_file_size": slider_position,
+            "pattern_type": pattern_type,
+            "pattern": pattern,
         }
     )

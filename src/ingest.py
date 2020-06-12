@@ -16,8 +16,8 @@ def should_include(path: str, base_path: str, include_patterns: List[str]) -> bo
     for pattern in include_patterns:
         if fnmatch(rel_path, pattern):
             include = True
-        else:
-            include = False
+        
+
     return include
 
 def should_exclude(path: str, base_path: str, ignore_patterns: List[str]) -> bool:
