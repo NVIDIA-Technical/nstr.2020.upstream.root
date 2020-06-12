@@ -1,10 +1,11 @@
 import asyncio
 from typing import Tuple
 
-from .decorators import async_timeout
-from config import CLONE_TIMEOUT
+from gitingest.utils import async_timeout
 
-async def check_repo_exists(url: str) -> Tuple[bool, str]:
+CLONE_TIMEOUT = 20
+
+async def check_repo_exists(url: str) -> bool:
     proc = await asyncio.create_subprocess_exec(
         "git",
         "ls-remote",
@@ -13,9 +14,7 @@ async def check_repo_exists(url: str) -> Tuple[bool, str]:
         stderr=asyncio.subprocess.PIPE,
     )
     await proc.communicate()
-    if proc.returncode != 0:
-        return False
-    return True
+    return proc.returncode == 0
 
 @async_timeout(CLONE_TIMEOUT)
 async def clone_repo(query: dict) -> str:

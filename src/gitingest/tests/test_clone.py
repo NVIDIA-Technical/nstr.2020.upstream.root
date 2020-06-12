@@ -1,5 +1,5 @@
 import pytest
-from utils.clone import clone_repo, check_repo_exists
+from clone import clone_repo, check_repo_exists
 from unittest.mock import patch, AsyncMock
 
 @pytest.mark.asyncio
@@ -11,7 +11,7 @@ async def test_clone_repo_with_commit():
         'local_path': '/tmp/repo'
     }
     
-    with patch('utils.clone.check_repo_exists', return_value=True) as mock_check:
+    with patch('clone.check_repo_exists', return_value=True) as mock_check:
         with patch('asyncio.create_subprocess_exec', new_callable=AsyncMock) as mock_exec:
             mock_process = AsyncMock()
             mock_process.communicate.return_value = (b'output', b'error')
@@ -30,7 +30,7 @@ async def test_clone_repo_without_commit():
         'local_path': '/tmp/repo'
     }
     
-    with patch('utils.clone.check_repo_exists', return_value=True) as mock_check:
+    with patch('clone.check_repo_exists', return_value=True) as mock_check:
         with patch('asyncio.create_subprocess_exec', new_callable=AsyncMock) as mock_exec:
             mock_process = AsyncMock()
             mock_process.communicate.return_value = (b'output', b'error')
@@ -49,7 +49,7 @@ async def test_clone_repo_nonexistent_repository():
         'local_path': '/tmp/repo'
     }
     
-    with patch('utils.clone.check_repo_exists', return_value=False) as mock_check:
+    with patch('gitingest.clone.check_repo_exists', return_value=False) as mock_check:
         with pytest.raises(ValueError, match="Repository not found"):
             await clone_repo(query)
             mock_check.assert_called_once_with(query['url'])

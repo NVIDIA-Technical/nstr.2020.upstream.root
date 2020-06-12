@@ -1,14 +1,16 @@
+import os
+from dotenv import load_dotenv
+
 from fastapi import FastAPI, Request
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse, FileResponse, Response
 from fastapi.staticfiles import StaticFiles
-import os
-from dotenv import load_dotenv
-from api_analytics.fastapi import Analytics
 from starlette.middleware.trustedhost import TrustedHostMiddleware
+from api_analytics.fastapi import Analytics
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
-from utils.limiter import limiter
+
+from server_utils import limiter
 from routers import download, dynamic, index
 
 

@@ -1,21 +1,18 @@
-from ingest import ingest_from_query
-from utils.clone import clone_repo
-from utils.parse_query import parse_query
 from typing import List
 from fastapi.templating import Jinja2Templates
 from fastapi import Request
+
 from config import MAX_DISPLAY_SIZE, EXAMPLE_REPOS
-
-
+from gitingest import ingest_from_query, clone_repo, parse_query
+from server_utils import logSliderToSize
 
 templates = Jinja2Templates(directory="templates")
 
-
 async def process_query(request: Request, input_text: str, slider_position: int, pattern_type: str = "exclude", pattern: str = "", is_index: bool = False) -> str:
-    
     template = "index.jinja" if is_index else "github.jinja"
+    max_file_size = logSliderToSize(slider_position)
     try:
-        query = parse_query(input_text, slider_position, pattern_type, pattern)
+        query = parse_query(input_text, max_file_size, pattern_type, pattern)
         await clone_repo(query)
         summary, tree, content = ingest_from_query(query)
         with open(f"{query['local_path']}.txt", "w") as f:

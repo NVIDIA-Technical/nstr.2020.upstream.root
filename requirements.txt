@@ -5,5 +5,4 @@ slowapi
 tokencost
 pytest
 pytest-asyncio
-pytest-cov
 click>=8.0.0

@@ -1,7 +1,8 @@
-import click
 import os
-from .ingest import analyze_codebase, DEFAULT_IGNORE_PATTERNS, MAX_FILE_SIZE
 import pathlib
+import click
+
+from .ingest import analyze_codebase, DEFAULT_IGNORE_PATTERNS, MAX_FILE_SIZE
 
 def normalize_pattern(pattern: str) -> str:
     pattern = pattern.strip()

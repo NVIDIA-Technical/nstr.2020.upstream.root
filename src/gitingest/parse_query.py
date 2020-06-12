@@ -1,10 +1,11 @@
+from typing import List
 import uuid
 import re
 import os 
-from utils.log_convert import logSliderToSize
-from typing import List
 
-from config import TMP_BASE_PATH, DEFAULT_IGNORE_PATTERNS
+from .ingest import DEFAULT_IGNORE_PATTERNS
+
+TMP_BASE_PATH = "../tmp"
 
 def parse_url(url: str) -> dict:
     parsed = {
@@ -71,9 +72,9 @@ def override_ignore_patterns(ignore_patterns: List[str], include_patterns: List[
             ignore_patterns.remove(pattern)
     return ignore_patterns
 
-def parse_query(input_text: str, slider_position: int, pattern_type: str, pattern: str) -> dict:
+def parse_query(input_text: str, max_file_size: int, pattern_type: str, pattern: str) -> dict:
     query = parse_url(input_text)
-    query['max_file_size'] = logSliderToSize(slider_position)
+    query['max_file_size'] = max_file_size
     query['pattern_type'] = pattern_type
     parsed_pattern = parse_patterns(pattern)
     if pattern_type == 'include':

@@ -3,7 +3,7 @@ from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 
 from process_query import process_query
-from utils.limiter import limiter
+from server_utils import limiter
 
 router = APIRouter()
 templates = Jinja2Templates(directory="templates")

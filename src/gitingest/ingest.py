@@ -1,13 +1,13 @@
 import os
 from fnmatch import fnmatch
 from typing import Dict, List, Union
+
 from tokencost import count_string_tokens
 
-# Configuration
-MAX_FILE_SIZE = 10000000  # 10MB
+MAX_FILE_SIZE = 10 * 1024 * 1024  # 10MB
 MAX_DIRECTORY_DEPTH = 20  # Maximum depth of directory traversal
 MAX_FILES = 10000  # Maximum number of files to process
-MAX_TOTAL_SIZE_BYTES = 500 * 1024 * 1024  # Total size limit
+MAX_TOTAL_SIZE_BYTES = 500 * 1024 * 1024  # 500MB
 
 DEFAULT_IGNORE_PATTERNS = [
     # Python

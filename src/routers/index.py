@@ -2,7 +2,7 @@ from fastapi import APIRouter, Request, Form
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 
-from utils.limiter import limiter
+from server_utils import limiter
 from process_query import process_query
 from config import EXAMPLE_REPOS
 
