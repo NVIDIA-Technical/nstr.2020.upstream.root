@@ -1,11 +1,9 @@
-
 import uuid
 
 from config import TMP_BASE_PATH
 
 def parse_url(url: str, max_file_size: int) -> dict:
     parsed = {
-        
         "user_name": None,
         "repo_name": None,
         "type": None,
@@ -17,11 +15,14 @@ def parse_url(url: str, max_file_size: int) -> dict:
         "max_file_size": int(max_file_size) * 1024
     }
     
-    print(f"max_file_size: {max_file_size}")
+
+    
+    
+    if not url.startswith("https://"):
+        url = "https://" + url
+    
     if not url.startswith("https://github.com/"):
         raise ValueError("Invalid GitHub URL. Please provide a valid GitHub repository URL.")
-    
-    
     
     # Remove anything after the first space
     url = url.split(" ")[0]
