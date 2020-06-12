@@ -1,6 +1,7 @@
 import os
 from fnmatch import fnmatch
 from typing import Dict, List, Union
+from tokencost import count_string_tokens
 
 # Configuration
 MAX_FILE_SIZE = 10000000  # 10MB
@@ -308,6 +309,7 @@ def generate_token_string(context_string: str) -> str:
     try:
         total_gpt_tokens = count_string_tokens(prompt=context_string, model="gpt-4o")
     except Exception as e:
+        print(e)
         return None
     if total_gpt_tokens > 1000000:
         formatted_tokens = f"{total_gpt_tokens/1000000:.1f}M"
