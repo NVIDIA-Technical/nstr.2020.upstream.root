@@ -30,7 +30,7 @@ async def index_post(request: Request, input_text: str = Form(...)):
         parsed_url = parse_url(input_text)
         summary, tree, content = await process_query(parsed_url)
     except Exception as e:
-        # raise e
+        raise e
         return templates.TemplateResponse(
             "index.html", 
             {

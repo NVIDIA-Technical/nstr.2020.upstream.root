@@ -29,6 +29,7 @@ async def process_catch_all(request: Request, input_text: str = Form(...)):
         parsed_url = parse_url(input_text)
         summary, tree, content = await process_query(parsed_url)
     except Exception as e:
+        raise e
         return templates.TemplateResponse(
             "github.html", 
             {

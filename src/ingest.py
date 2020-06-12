@@ -1,7 +1,7 @@
 import os
 import fnmatch
 from typing import Dict, List, Union
-from config import DEFAULT_IGNORE_PATTERNS, MAX_FILE_SIZE, TMP_BASE_PATH
+from config import DEFAULT_IGNORE_PATTERNS, MAX_FILE_SIZE
 
 def should_ignore(path: str, base_path: str, ignore_patterns: List[str]) -> bool:
     """Checks if a file or directory should be ignored based on patterns."""
@@ -31,7 +31,7 @@ def read_file_content(file_path: str) -> str:
     except Exception as e:
         return f"Error reading file: {str(e)}"
     
-def analyze_directory(path: str, ignore_patterns: List[str], base_path: str) -> Dict:
+def scan_directory(path: str, ignore_patterns: List[str], base_path: str) -> Dict:
     """Recursively analyzes a directory and its contents."""
     result = {
         "name": os.path.basename(path),
@@ -67,7 +67,7 @@ def analyze_directory(path: str, ignore_patterns: List[str], base_path: str) -> 
                 result["file_count"] += 1
                 
             elif os.path.isdir(item_path):
-                subdir = analyze_directory(item_path, ignore_patterns, base_path)
+                subdir = scan_directory(item_path, ignore_patterns, base_path)
                 if subdir:
                     result["children"].append(subdir)
                     result["size"] += subdir["size"]
@@ -80,7 +80,7 @@ def analyze_directory(path: str, ignore_patterns: List[str], base_path: str) -> 
     return result
 
 
-def get_all_files(node: Dict, max_file_size: int, files: List = None) -> List[Dict]:
+def extract_files_content(query: dict, node: Dict, max_file_size: int, files: List = None) -> List[Dict]:
     """Recursively collects all text files with their contents."""
     if files is None:
         files = []
@@ -91,13 +91,13 @@ def get_all_files(node: Dict, max_file_size: int, files: List = None) -> List[Di
             content = "[Content ignored: file too large]"
             
         files.append({
-            "path": node["path"].replace(TMP_BASE_PATH, ""),
+            "path": node["path"].replace(query['local_path'], ""),
             "content": content,
             "size": node["size"]
         })
     elif node["type"] == "directory":
         for child in node["children"]:
-            get_all_files(child, max_file_size, files)
+            extract_files_content(query, child, max_file_size, files)
     return files
 
 def create_file_content_string(files: List[Dict]) -> str:
@@ -113,46 +113,63 @@ def create_file_content_string(files: List[Dict]) -> str:
     
     return output
 
-def create_summary_string(result: Dict, files: List[Dict], query: dict) -> str:
+def create_summary_string(query: dict, nodes: Dict, files: List[Dict], ) -> str:
     """Creates a summary string with file counts and content size."""
     total_lines = sum(len(file["content"].splitlines()) for file in files)
+
+    if query['branch']:
+        if len(query['branch']) > 20:
+            branch = query['branch'][:20] + '...'
+        else:
+            branch = query['branch']
+    else:
+        branch = "main"
+
     
     return (
-        f"Files analyzed: {result['file_count']}\n"
-        f"Directories analyzed: {result['dir_count']}\n"
+        f"Repository: {query['user_name']}/{query['repo_name']}\n"
+        f"Files analyzed: {nodes['file_count']}\n"
+        f"Directories analyzed: {nodes['dir_count']}\n"
         f"Total lines of content: {total_lines:,}\n"
-        f"branch: {query['branch'] if len(query['branch']) < 20 else query['branch'][:20] + '...'}\n"
-        f"path: {query['subpath']}\n"
+        f"Subpath: {query['subpath']}\n"
+        # f"branch: {branch}\n"
     )
 
-def create_tree_structure(node: Dict, prefix: str = "", is_last: bool = True) -> str:
+def create_tree_structure(query: dict, node: Dict, prefix: str = "", is_last: bool = True) -> str:
     """Creates a tree-like string representation of the file structure."""
     
     tree = ""
-    current_prefix = "└── " if is_last else "├── "
-    tree += prefix + current_prefix + node["name"] + "\n"
-    
+    # Only add the root node name if it's not an empty string
+    if not node["name"]:
+        node["name"] = query['slug']
+
+    if node["name"]:
+        current_prefix = "└── " if is_last else "├── "
+        tree += prefix + current_prefix + node["name"] + "\n"
+        
     if node["type"] == "directory":
-        new_prefix = prefix + ("    " if is_last else "│   ")
+        # Adjust prefix only if we added a node name
+        new_prefix = prefix + ("    " if is_last else "│   ") if node["name"] else prefix
         children = node["children"]
         for i, child in enumerate(children):
-            tree += create_tree_structure(child, new_prefix, i == len(children) - 1)
+            tree += create_tree_structure(query, child, new_prefix, i == len(children) - 1)
     
     return tree
 
 
-def ingest_from_path(query: dict, path: str, ignore_patterns: List[str] = DEFAULT_IGNORE_PATTERNS, max_file_size: int = MAX_FILE_SIZE, base_path: str = TMP_BASE_PATH) -> Dict:
+def ingest_from_query(query: dict, ignore_patterns: List[str] = DEFAULT_IGNORE_PATTERNS, max_file_size: int = MAX_FILE_SIZE) -> Dict:
     """Main entry point for analyzing a codebase directory."""
     
-    path = f"{base_path}/{path}"
+    path = f"{query['local_path']}{query['subpath']}"
+    print(path)
     if not os.path.exists(path):
         raise ValueError(f"Path {path} does not exist")
         
     
-    nodes = analyze_directory(path, ignore_patterns, base_path)
-    files = get_all_files(nodes, max_file_size)
-    summary = create_summary_string(nodes, files, query)
-    tree = "Directory structure:\n" + create_tree_structure(nodes)
+    nodes = scan_directory(path, ignore_patterns, query['local_path'])
+    files = extract_files_content(query, nodes, max_file_size)
+    summary = create_summary_string(query, nodes, files)
+    tree = "Directory structure:\n" + create_tree_structure(query, nodes)
 
     files_content = create_file_content_string(files)
     

@@ -1,18 +1,17 @@
-from utils.gitclone import clone_repo, delete_repo
-from ingest import ingest_from_path
-from config import TMP_BASE_PATH
+from utils.clone import clone_repo, delete_repo
+from ingest import ingest_from_query
 
 
 async def process_query(query: dict) -> str:
     print(query)
-    await clone_repo(query['url'], query['id'])
+    await clone_repo(query)
         
-    result = ingest_from_path(query, query['id'])
+    result = ingest_from_query(query)
 
     txt_dump = result[1] + "\n" + result[2]
-    with open(f"{TMP_BASE_PATH}/{query['id']}.txt", "w") as f:
+    with open(f"{query['local_path']}.txt", "w") as f:
         f.write(txt_dump)
 
-    delete_repo(query['id'])
+    delete_repo(query['slug'])
         
     return result

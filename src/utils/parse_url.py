@@ -1,4 +1,8 @@
 
+import uuid
+
+from config import TMP_BASE_PATH
+
 def parse_url(url: str) -> dict:
     parsed = {
         
@@ -7,6 +11,7 @@ def parse_url(url: str) -> dict:
         "type": None,
         "branch": None,
         "subpath": "/",
+        "local_path": None,
         "url": None,
     }
     
@@ -27,7 +32,10 @@ def parse_url(url: str) -> dict:
     
 
     parsed["url"] = f"https://github.com/{parsed['user_name']}/{parsed['repo_name']}"
-    parsed['id'] = parsed["url"].replace("https://github.com/", "").replace("/", "-")
+    parsed['slug'] = parsed["url"].replace("https://github.com/", "").replace("/", "-")
+    parsed["id"] = str(uuid.uuid4())
+    parsed["local_path"] = f"{TMP_BASE_PATH}/{parsed['id']}/{parsed['slug']}"
+    
 
     if len(path_parts) > 3:
         parsed["type"] = path_parts[2]
