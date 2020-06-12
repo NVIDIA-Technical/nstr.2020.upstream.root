@@ -125,7 +125,7 @@ def create_summary_string(query: dict, nodes: Dict, files: List[Dict], ) -> str:
         summary += f"Subpath: {query['subpath']}\n"
     if query['commit']:
         summary += f"Commit: {query['commit']}\n"
-    elif query['branch'] != 'main' and query['branch'] != 'master':
+    elif query['branch'] != 'main' and query['branch'] != 'master' and query['branch']:
         summary += f"Branch: {query['branch']}\n"
     return summary
         
