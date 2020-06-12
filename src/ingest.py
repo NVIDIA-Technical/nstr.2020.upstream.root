@@ -6,7 +6,7 @@ from typing import Dict, List, Union
 
 MAX_DIRECTORY_DEPTH = 10  # Maximum depth of directory traversal
 MAX_FILES = 10000  # Maximum number of files to process
-MAX_TOTAL_SIZE_BYTES = 100 * 1024 * 1024  # 100MB total size limit
+MAX_TOTAL_SIZE_BYTES = 500 * 1024 * 1024  # 100MB total size limit
 
 def should_ignore(path: str, base_path: str, ignore_patterns: List[str]) -> bool:
     """Checks if a file or directory should be ignored based on patterns."""
