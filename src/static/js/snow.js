@@ -5,7 +5,7 @@ function initSnow() {
 
     // Configure snow
     const snowflakes = [];
-    const maxSnowflakes = 100;
+    const maxSnowflakes = 50;
     const spawnInterval = 200;
     let currentSnowflakes = 0;
     let lastSpawnTime = 0;
