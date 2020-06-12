@@ -158,7 +158,9 @@ def generate_token_string(context_string: str) -> str:
         formatted_tokens = f"{total_gpt_tokens/1000000:.1f}M"
     elif total_gpt_tokens > 1000:
         formatted_tokens = f"{total_gpt_tokens/1000:.1f}k"
-    return f"{total_gpt_tokens}"
+    else:
+        formatted_tokens = f"{total_gpt_tokens}"
+    return formatted_tokens
 
 def ingest_from_query(query: dict, ignore_patterns: List[str] = DEFAULT_IGNORE_PATTERNS, max_file_size: int = MAX_FILE_SIZE) -> Dict:
     """Main entry point for analyzing a codebase directory or single file."""
