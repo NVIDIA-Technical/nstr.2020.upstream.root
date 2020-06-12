@@ -113,7 +113,7 @@ def create_file_content_string(files: List[Dict]) -> str:
     
     return output
 
-def create_summary_string(result: Dict, files: List[Dict]) -> str:
+def create_summary_string(result: Dict, files: List[Dict], query: dict) -> str:
     """Creates a summary string with file counts and content size."""
     total_lines = sum(len(file["content"].splitlines()) for file in files)
     
@@ -121,6 +121,8 @@ def create_summary_string(result: Dict, files: List[Dict]) -> str:
         f"Files analyzed: {result['file_count']}\n"
         f"Directories analyzed: {result['dir_count']}\n"
         f"Total lines of content: {total_lines:,}\n"
+        f"branch: {query['branch'] if len(query['branch']) < 20 else query['branch'][:20] + '...'}\n"
+        f"path: {query['subpath']}\n"
     )
 
 def create_tree_structure(node: Dict, prefix: str = "", is_last: bool = True) -> str:
@@ -139,19 +141,19 @@ def create_tree_structure(node: Dict, prefix: str = "", is_last: bool = True) ->
     return tree
 
 
-def ingest_from_path(id: str, ignore_patterns: List[str] = DEFAULT_IGNORE_PATTERNS, max_file_size: int = MAX_FILE_SIZE, base_path: str = TMP_BASE_PATH) -> Dict:
+def ingest_from_path(query: dict, path: str, ignore_patterns: List[str] = DEFAULT_IGNORE_PATTERNS, max_file_size: int = MAX_FILE_SIZE, base_path: str = TMP_BASE_PATH) -> Dict:
     """Main entry point for analyzing a codebase directory."""
     
-    path = f"{base_path}/{id}"
+    path = f"{base_path}/{path}"
     if not os.path.exists(path):
         raise ValueError(f"Path {path} does not exist")
         
     
     nodes = analyze_directory(path, ignore_patterns, base_path)
     files = get_all_files(nodes, max_file_size)
-    summary = create_summary_string(nodes, files)
-    tree = create_tree_structure(nodes)
+    summary = create_summary_string(nodes, files, query)
+    tree = "Directory structure:\n" + create_tree_structure(nodes)
 
-    formatted_content = create_file_content_string(files)
+    files_content = create_file_content_string(files)
     
-    return (summary, tree, formatted_content)
+    return (summary, tree, files_content)

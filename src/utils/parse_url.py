@@ -1,12 +1,13 @@
 
 def parse_url(url: str) -> dict:
     parsed = {
-        "url": None,
+        
         "user_name": None,
         "repo_name": None,
-        "tree": False,
+        "type": None,
         "branch": None,
-        "path": "/",
+        "subpath": "/",
+        "url": None,
     }
     
     
@@ -23,13 +24,14 @@ def parse_url(url: str) -> dict:
 
     parsed["user_name"] = path_parts[0]
     parsed["repo_name"] = path_parts[1]
+    
 
     parsed["url"] = f"https://github.com/{parsed['user_name']}/{parsed['repo_name']}"
     parsed['id'] = parsed["url"].replace("https://github.com/", "").replace("/", "-")
 
-    if len(path_parts) > 2:
-        if path_parts[2] == "tree":
-            parsed["tree"] = True
-            parsed["path"] = "/".join(path_parts[3:])
+    if len(path_parts) > 3:
+        parsed["type"] = path_parts[2]
+        parsed["branch"] = path_parts[3]
+        parsed["subpath"] = "/" + "/".join(path_parts[4:])
     print(parsed)
     return parsed
