@@ -18,7 +18,7 @@ app.add_middleware(TrustedHostMiddleware, allowed_hosts=["gitingest.com", "*.git
 templates = Jinja2Templates(directory="templates")
 
     
-
+@app.get("/api/", response_class=HTMLResponse)
 @app.get("/api", response_class=HTMLResponse)
 async def api_docs(request: Request):
     return templates.TemplateResponse(
