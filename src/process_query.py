@@ -36,7 +36,7 @@ async def process_query(request: Request, input_text: str, slider_position: int,
         content = f"(Files content cropped to {int(MAX_DISPLAY_SIZE/1000)}k characters, download full ingest to see more)\n" + content[:MAX_DISPLAY_SIZE]
         
     return templates.TemplateResponse(
-        "index.jinja.html", 
+        template, 
         {
             "request": request, 
             "github_url": input_text,
