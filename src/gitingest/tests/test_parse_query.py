@@ -1,6 +1,5 @@
 import pytest
-from gitingest.parse_query import parse_query, parse_url
-from gitingest.ingest import DEFAULT_IGNORE_PATTERNS
+from gitingest.parse_query import parse_query, parse_url, DEFAULT_IGNORE_PATTERNS
 
 
 def test_parse_url_valid():
@@ -26,21 +25,19 @@ def test_parse_query_basic():
         "https://gitlab.com/user/repo"
     ]
     for url in test_cases:
-        result = parse_query(url, max_file_size=50, pattern_type='exclude', pattern='*.txt')
+        result = parse_query(url, max_file_size=50, from_web=True, ignore_patterns='*.txt')
         assert result["user_name"] == "user"
         assert result["repo_name"] == "repo"
         assert result["url"] == url
-        assert result["pattern_type"] == "exclude"
         assert "*.txt" in result["ignore_patterns"]
 
 def test_parse_query_include_pattern():
     url = "https://github.com/user/repo"
-    result = parse_query(url, max_file_size=50, pattern_type='include', pattern='*.py')
-    assert result["pattern_type"] == "include"
+    result = parse_query(url, max_file_size=50, from_web=True, include_patterns='*.py')
     assert result["include_patterns"] == ["*.py"]
     assert result["ignore_patterns"] == DEFAULT_IGNORE_PATTERNS
 
 def test_parse_query_invalid_pattern():
     url = "https://github.com/user/repo"
     with pytest.raises(ValueError, match="Pattern.*contains invalid characters"):
-        parse_query(url, max_file_size=50, pattern_type='include', pattern='*.py;rm -rf')
+        parse_query(url, max_file_size=50, from_web=True, include_patterns='*.py;rm -rf')

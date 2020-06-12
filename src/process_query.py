@@ -11,12 +11,22 @@ templates = Jinja2Templates(directory="templates")
 async def process_query(request: Request, input_text: str, slider_position: int, pattern_type: str = "exclude", pattern: str = "", is_index: bool = False) -> str:
     template = "index.jinja" if is_index else "github.jinja"
     max_file_size = logSliderToSize(slider_position)
+    if pattern_type == "include":
+        include_patterns = pattern
+        exclude_patterns = None
+    elif pattern_type == "exclude":
+        exclude_patterns = pattern
+        include_patterns = None
     try:
-        query = parse_query(input_text, max_file_size, pattern_type, pattern)
+        query = parse_query(input_text, max_file_size, True, include_patterns, exclude_patterns)
         await clone_repo(query)
         summary, tree, content = ingest_from_query(query)
         with open(f"{query['local_path']}.txt", "w") as f:
             f.write(tree + "\n" + content)
+        print(f"{query['slug']:<20}", end="")
+        if pattern and pattern != "":
+            print(f"{pattern_type}[{pattern}]", end="")
+        print(f"\n{query['url']}")
     except Exception as e:
         return templates.TemplateResponse(
             template, 

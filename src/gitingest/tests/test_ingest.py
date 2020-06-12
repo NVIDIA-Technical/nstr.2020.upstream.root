@@ -1,5 +1,5 @@
 import pytest
-from ingest import (
+from src.gitingest.ingest_from_query import (
     scan_directory,
     extract_files_content,
 )

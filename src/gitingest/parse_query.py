@@ -1,9 +1,51 @@
-from typing import List
+from typing import List, Union
 import uuid
-import re
 import os 
 
-from .ingest import DEFAULT_IGNORE_PATTERNS
+
+DEFAULT_IGNORE_PATTERNS = [
+    # Python
+    '*.pyc', '*.pyo', '*.pyd', '__pycache__', '.pytest_cache', '.coverage',
+    '.tox', '.nox', '.mypy_cache', '.ruff_cache', '.hypothesis',
+    'poetry.lock', 'Pipfile.lock',
+    
+    # JavaScript/Node
+    'node_modules', 'bower_components', 'package-lock.json', 'yarn.lock',
+    '.npm', '.yarn', '.pnpm-store',
+    
+    # Version control
+    '.git', '.svn', '.hg', '.gitignore', '.gitattributes', '.gitmodules',
+    
+    # Images and media
+    '*.svg', '*.png', '*.jpg', '*.jpeg', '*.gif', '*.ico', '*.pdf',
+    '*.mov', '*.mp4', '*.mp3', '*.wav',
+    
+    # Virtual environments
+    'venv', '.venv', 'env', '.env', 'virtualenv',
+    
+    # IDEs and editors
+    '.idea', '.vscode', '.vs', '*.swp', '*.swo', '*.swn',
+    '.settings', '.project', '.classpath', '*.sublime-*',
+    
+    # Temporary and cache files
+    '*.log', '*.bak', '*.swp', '*.tmp', '*.temp',
+    '.cache', '.sass-cache', '.eslintcache',
+    '.DS_Store', 'Thumbs.db', 'desktop.ini',
+    
+    # Build directories and artifacts
+    'build', 'dist', 'target', 'out',
+    '*.egg-info', '*.egg', '*.whl',
+    '*.so', '*.dylib', '*.dll', '*.class',
+    
+    # Documentation
+    'site-packages', '.docusaurus', '.next', '.nuxt',
+    
+    # Other common patterns
+    '*.min.js', '*.min.css',  # Minified files
+    '*.map',  # Source maps
+    '.terraform', '*.tfstate*',  # Terraform
+    'vendor/',  # Dependencies in various languages
+]
 
 TMP_BASE_PATH = "../tmp"
 
@@ -17,6 +59,8 @@ def parse_url(url: str) -> dict:
         "subpath": "/",
         "local_path": None,
         "url": None,
+        "slug": None,
+        "id": None,
     }
     
     url = url.split(" ")[0]
@@ -56,14 +100,14 @@ def normalize_pattern(pattern: str) -> str:
         pattern += "*"
     return pattern
 
-def parse_patterns(pattern: str) -> List[str]:
+def parse_patterns(pattern: Union[List[str], str]) -> List[str]:
+    if isinstance(pattern, list):
+        pattern = ",".join(pattern)
+
     for p in pattern.split(","):
         if not all(c.isalnum() or c in "-_./+*" for c in p.strip()):
             raise ValueError(f"Pattern '{p}' contains invalid characters. Only alphanumeric characters, dash (-), underscore (_), dot (.), forward slash (/), plus (+), and asterisk (*) are allowed.")
-    
     patterns = [normalize_pattern(p) for p in pattern.split(",")]
-    if len(patterns) >= 10:
-        raise ValueError("Maximum of 10 patterns allowed")
     return patterns
 
 def override_ignore_patterns(ignore_patterns: List[str], include_patterns: List[str]) -> List[str]:
@@ -72,19 +116,41 @@ def override_ignore_patterns(ignore_patterns: List[str], include_patterns: List[
             ignore_patterns.remove(pattern)
     return ignore_patterns
 
-def parse_query(input_text: str, max_file_size: int, pattern_type: str, pattern: str) -> dict:
-    query = parse_url(input_text)
-    query['max_file_size'] = max_file_size
-    query['pattern_type'] = pattern_type
-    parsed_pattern = parse_patterns(pattern)
-    if pattern_type == 'include':
-        query['include_patterns'] = parsed_pattern
-        query['ignore_patterns'] = override_ignore_patterns(DEFAULT_IGNORE_PATTERNS, parsed_pattern)
-    else:
-        query['ignore_patterns'] = DEFAULT_IGNORE_PATTERNS.copy()
-        query['ignore_patterns'].extend(parsed_pattern)
-        query['include_patterns'] = None
 
-    print(f"{query['slug']:<20} | {query['pattern_type']}[{pattern}] {int(query['max_file_size']/1024)}kb, \n{query['url']}")
+def parse_path(path: str) -> dict:
+    
+    query = {
+        "local_path": os.path.abspath(path),
+        "slug": os.path.basename(os.path.dirname(path)) + "/" + os.path.basename(path),
+        "subpath": "/",
+        "id": str(uuid.uuid4()),
+        "url": None,
+    }
+    return query
+
+def parse_query(source: str, max_file_size: int, from_web: bool, include_patterns: Union[List[str], str] = None, ignore_patterns: Union[List[str], str] = None) -> dict:
+    if from_web:
+        query = parse_url(source)
+    else:
+        if source.startswith("https://") or "github.com" in source:
+            query = parse_url(source)
+        else:
+            query = parse_path(source)
+    query['max_file_size'] = max_file_size
+
+    if ignore_patterns and ignore_patterns != "":
+        ignore_patterns = DEFAULT_IGNORE_PATTERNS + parse_patterns(ignore_patterns)
+    else:
+        ignore_patterns = DEFAULT_IGNORE_PATTERNS
+    
+    if include_patterns and include_patterns != "":
+        include_patterns = parse_patterns(include_patterns)
+        ignore_patterns = override_ignore_patterns(ignore_patterns, include_patterns)
+    else: 
+        include_patterns = None
+    
+    query['ignore_patterns'] = ignore_patterns
+    query['include_patterns'] = include_patterns
+    
     return query
 
