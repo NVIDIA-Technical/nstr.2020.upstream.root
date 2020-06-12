@@ -4,6 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" type="image/x-icon" href="/static/favicon.ico">
+    
+    <!-- OpenGraph Meta Tags -->
+    <meta property="og:title" content="{% block og_title %}Git ingest{% endblock %}">
+    <meta property="og:description" content="{% block og_description %}Replace 'hub' with 'ingest' in any Github Url for a prompt-friendly text{% endblock %}">
+    <meta property="og:type" content="{% block og_type %}website{% endblock %}">
+    <meta property="og:url" content="{{ request.url }}">
+    <meta property="og:image" content="{% block og_image %}/static/og-image.png{% endblock %}">
+    
     <title>{% block title %}Git ingest{% endblock %}</title>
 
     <script src="https://cdn.tailwindcss.com"></script>
