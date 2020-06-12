@@ -1,10 +1,8 @@
 import os
 from fnmatch import fnmatch
 from typing import Dict, List, Union
-import asyncio
+import tiktoken
 
-from tokencost import count_string_tokens
-from gitingest.parse_query import parse_query
 
 MAX_FILE_SIZE = 10 * 1024 * 1024  # 10MB
 MAX_DIRECTORY_DEPTH = 20  # Maximum depth of directory traversal
@@ -267,18 +265,21 @@ def create_tree_structure(query: dict, node: Dict, prefix: str = "", is_last: bo
     return tree
 
 def generate_token_string(context_string: str) -> str:
+    """Returns the number of tokens in a text string."""
     formatted_tokens = ""
     try:
-        total_gpt_tokens = count_string_tokens(prompt=context_string, model="gpt-4o")
+        encoding = tiktoken.get_encoding("cl100k_base", )
+        total_tokens = len(encoding.encode(context_string, disallowed_special=()))
+        
     except Exception as e:
         print(e)
         return None
-    if total_gpt_tokens > 1000000:
-        formatted_tokens = f"{total_gpt_tokens/1000000:.1f}M"
-    elif total_gpt_tokens > 1000:
-        formatted_tokens = f"{total_gpt_tokens/1000:.1f}k"
+    if total_tokens > 1000000:
+        formatted_tokens = f"{total_tokens/1000000:.1f}M"
+    elif total_tokens > 1000:
+        formatted_tokens = f"{total_tokens/1000:.1f}k"
     else:
-        formatted_tokens = f"{total_gpt_tokens}"
+        formatted_tokens = f"{total_tokens}"
     return formatted_tokens
 
 def ingest_single_file(path: str, query: dict) -> Dict:

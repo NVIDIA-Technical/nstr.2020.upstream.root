@@ -2,7 +2,7 @@ fastapi[standard]
 uvicorn
 fastapi-analytics
 slowapi
-tokencost
+tiktoken
 pytest
 pytest-asyncio
 click>=8.0.0
