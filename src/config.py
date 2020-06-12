@@ -18,7 +18,6 @@ DEFAULT_IGNORE_PATTERNS = [
     '*.so', '*.dylib', '*.dll',             # Compiled libraries
     'package-lock.json', 'yarn.lock',        # Package lock files
     'pnpm-lock.yaml', 'npm-shrinkwrap.json', # More package lock files
-    'LICENSE', 'LICENSE.*', 'COPYING',       # License files
     'COPYING.*', 'COPYRIGHT',                # More license-related files
     'AUTHORS', 'AUTHORS.*',                  # Author files
     'CONTRIBUTORS', 'CONTRIBUTORS.*',        # Contributor files
