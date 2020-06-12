@@ -153,9 +153,12 @@ def create_tree_structure(query: dict, node: Dict, prefix: str = "", is_last: bo
 
 def generate_token_string(context_string: str) -> str:
     formatted_tokens = ""
-    total_gpt_tokens = count_string_tokens(prompt=context_string, model="gpt-4o")
+    try: 
+        total_gpt_tokens = count_string_tokens(prompt=context_string, model="gpt-4o")
+    except Exception as e:
+        return None
     if total_gpt_tokens > 1000000:  
-        formatted_tokens = f"{total_gpt_tokens/1000000:.1f}M"
+            formatted_tokens = f"{total_gpt_tokens/1000000:.1f}M"
     elif total_gpt_tokens > 1000:
         formatted_tokens = f"{total_gpt_tokens/1000:.1f}k"
     else:
@@ -203,7 +206,8 @@ def ingest_from_query(query: dict, ignore_patterns: List[str] = DEFAULT_IGNORE_P
 
         print(files_content)
         formatted_tokens = generate_token_string(files_content)
-        summary += f"\nEstimated tokens: {formatted_tokens}"
+        if formatted_tokens:
+            summary += f"\nEstimated tokens: {formatted_tokens}"
         return (summary, tree, files_content)
     
     else:
@@ -215,7 +219,9 @@ def ingest_from_query(query: dict, ignore_patterns: List[str] = DEFAULT_IGNORE_P
 
 
         formatted_tokens = generate_token_string(tree + files_content)
-        summary += f"\nEstimated tokens: {formatted_tokens}"
+        if formatted_tokens:
+            summary += f"\nEstimated tokens: {formatted_tokens}"
+        
         
 
 
