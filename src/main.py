@@ -6,12 +6,18 @@ import os
 from dotenv import load_dotenv
 from api_analytics.fastapi import Analytics
 from starlette.middleware.trustedhost import TrustedHostMiddleware
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
+from utils.limiter import limiter
 from routers import download, dynamic, index
 
 
 load_dotenv()
 
 app = FastAPI()
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
 app.mount("/static", StaticFiles(directory="static"), name="static")
 app.add_middleware(Analytics, api_key=os.getenv('API_ANALYTICS_KEY'))
 app.add_middleware(TrustedHostMiddleware, allowed_hosts=["gitingest.com", "*.gitingest.com", "gitdigest.dev", "localhost"])
