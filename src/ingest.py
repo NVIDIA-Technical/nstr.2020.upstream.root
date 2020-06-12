@@ -162,7 +162,7 @@ def ingest_from_query(query: dict, ignore_patterns: List[str] = DEFAULT_IGNORE_P
     
     path = f"{query['local_path']}{query['subpath']}"
     if not os.path.exists(path):
-        raise ValueError(f"Path {path} does not exist")
+        raise ValueError(f"{query['slug']} cannot be found, make sure the repository is public")
         
     
     nodes = scan_directory(path, ignore_patterns, query['local_path'])
