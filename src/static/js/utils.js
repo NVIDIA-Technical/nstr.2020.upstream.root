@@ -83,7 +83,17 @@ function handleSubmit(event, showLoading = false) {
             // Store the star count before updating the DOM
             const starCount = currentStars;
 
-            document.documentElement.innerHTML = html;
+
+            // TEMPORARY SNOW LOGIC //
+            const parser = new DOMParser();
+            const newDoc = parser.parseFromString(html, 'text/html');
+
+            const existingCanvas = document.getElementById('snow-canvas');
+            document.body.innerHTML = newDoc.body.innerHTML;
+            if (existingCanvas) {
+                document.body.insertBefore(existingCanvas, document.body.firstChild);
+            }
+            // END TEMPORARY SNOW LOGIC //
 
             // Wait for next tick to ensure DOM is updated
             setTimeout(() => {
