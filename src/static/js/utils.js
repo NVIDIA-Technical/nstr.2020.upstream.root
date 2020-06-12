@@ -129,8 +129,7 @@ function logSliderToSize(position) {
     const minv = Math.log(1);
     const maxv = Math.log(102400);
 
-    const scale = (maxv - minv) / (maxp - minp);
-    const value = Math.exp(minv + scale * (position - minp));
+    const value = Math.exp(minv + (maxv - minv) * Math.pow(position / maxp, 1.5));
     return Math.round(value);
 }
 

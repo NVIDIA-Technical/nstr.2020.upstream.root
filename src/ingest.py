@@ -269,6 +269,45 @@ def generate_token_string(context_string: str) -> str:
         formatted_tokens = f"{total_gpt_tokens}"
     return formatted_tokens
 
+
+def ingest_single_file(path: str, query: dict) -> Dict:
+    if not os.path.isfile(path):
+            raise ValueError(f"Path {path} is not a file")
+            
+    file_size = os.path.getsize(path)
+    is_text = is_text_file(path)
+    if not is_text:
+        raise ValueError(f"File {path} is not a text file")
+        
+    content = read_file_content(path)
+    if file_size > query['max_file_size']:
+        content = "[Content ignored: file too large]"
+            
+    file_info = {
+        "path": path.replace(query['local_path'], ""),
+        "content": content,
+        "size": file_size
+    }
+    
+    summary = (
+        f"Repository: {query['user_name']}/{query['repo_name']}\n"
+        f"File: {os.path.basename(path)}\n"
+        f"Size: {file_size:,} bytes\n"
+        f"Lines: {len(content.splitlines()):,}\n"
+    )
+    
+    
+    
+    files_content = create_file_content_string([file_info])
+    tree = "Directory structure:\n└── " + os.path.basename(path)
+
+
+    formatted_tokens = generate_token_string(files_content)
+    if formatted_tokens:
+        summary += f"\nEstimated tokens: {formatted_tokens}"
+    return (summary, tree, files_content)
+
+
 def ingest_from_query(query: dict, ignore_patterns: List[str] = DEFAULT_IGNORE_PATTERNS) -> Dict:
     """Main entry point for analyzing a codebase directory or single file."""
     
@@ -277,43 +316,7 @@ def ingest_from_query(query: dict, ignore_patterns: List[str] = DEFAULT_IGNORE_P
         raise ValueError(f"{query['slug']} cannot be found, make sure the repository is public")
     
     if query.get('type') == 'blob':
-        if not os.path.isfile(path):
-            raise ValueError(f"Path {path} is not a file")
-            
-        file_size = os.path.getsize(path)
-        is_text = is_text_file(path)
-        if not is_text:
-            raise ValueError(f"File {path} is not a text file")
-            
-        content = read_file_content(path)
-        if file_size > query['max_file_size']:
-            content = "[Content ignored: file too large]"
-            
-        file_info = {
-            "path": path.replace(query['local_path'], ""),
-            "content": content,
-            "size": file_size
-        }
-        
-        summary = (
-            f"Repository: {query['user_name']}/{query['repo_name']}\n"
-            f"File: {os.path.basename(path)}\n"
-            f"Size: {file_size:,} bytes\n"
-            f"Lines: {len(content.splitlines()):,}\n"
-        )
-        
-        
-        
-        files_content = create_file_content_string([file_info])
-        tree = "Directory structure:\n└── " + os.path.basename(path)
-
-
-        print(files_content)
-        formatted_tokens = generate_token_string(files_content)
-        if formatted_tokens:
-            summary += f"\nEstimated tokens: {formatted_tokens}"
-        return (summary, tree, files_content)
-    
+        return ingest_single_file(path, query)
     else:
         nodes = scan_directory(path, ignore_patterns, query['local_path'])
         files = extract_files_content(query, nodes, query['max_file_size'])

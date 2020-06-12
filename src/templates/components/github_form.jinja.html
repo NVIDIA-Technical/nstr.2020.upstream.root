@@ -31,10 +31,10 @@
                 max="500" 
                 value="{{ default_file_size }}"
                 class="w-full h-3 
-                       bg-[#FE4A60]                    <!-- This defines the left (filled) part color -->
+                       bg-[#FE4A60]
                        bg-no-repeat 
                        bg-[length:50%_100%] 
-                       bg-[#FFF4DA]                    <!-- This defines the right (unfilled) part color -->
+                       bg-[#FFF4DA]
                        appearance-none 
                        border-[3px] 
                        border-gray-900 
@@ -71,62 +71,3 @@
         {% endif %}
     </div>
 </div> 
-
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    const slider = document.getElementById('file_size');
-    const sizeValue = document.getElementById('size_value');
-    const form = document.getElementById('ingestForm');
-
-    // Convert linear slider value (0-500) to logarithmic size (1KB to 100MB)
-    function logSliderToSize(position) {
-        const minp = 0;
-        const maxp = 500;
-        const minv = Math.log(1);
-        const maxv = Math.log(102400);
-
-        const scale = (maxv - minv) / (maxp - minp);
-        const value = Math.exp(minv + scale * (position - minp));
-        return Math.round(value);
-    }
-
-    function formatSize(sizeInKB) {
-        if (sizeInKB >= 1024) {
-            return Math.round(sizeInKB / 1024) + 'mb';
-        }
-        return Math.round(sizeInKB) + 'kb';
-    }
-
-    function updateSlider() {
-        const value = logSliderToSize(slider.value);
-        sizeValue.textContent = formatSize(value);
-        // Update the background size
-        slider.style.backgroundSize = `${(slider.value / slider.max) * 100}% 100%`;
-    }
-
-    // Initialize slider
-    if (slider) {
-        updateSlider(); // This will now update both the label and background on load
-    }
-
-    // Update on slider change
-    slider.addEventListener('input', updateSlider);
-
-    // Add form submit handler to convert size before sending
-    form.addEventListener('submit', function(e) {
-        // Get the actual KB value from the slider
-        const kbValue = logSliderToSize(slider.value);
-        
-        // Create a hidden input to send the actual KB value
-        const hiddenInput = document.createElement('input');
-        hiddenInput.type = 'hidden';
-        hiddenInput.name = 'max_file_size';
-        hiddenInput.value = kbValue;
-        
-        // Replace the original slider input in the form submission
-        form.appendChild(hiddenInput);
-    });
-});
-
-
-</script> 
