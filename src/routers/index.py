@@ -16,7 +16,7 @@ templates = Jinja2Templates(directory="templates")
 @router.get("/", response_class=HTMLResponse)
 async def home(request: Request):
     return templates.TemplateResponse(
-        "index.html", 
+        "index.jinja.html", 
         {
             "request": request,
             "examples": EXAMPLE_REPOS
@@ -34,7 +34,7 @@ async def index_post(request: Request, input_text: str = Form(...)):
     except Exception as e:
         print(e)
         return templates.TemplateResponse(
-            "index.html", 
+            "index.jinja.html", 
             {
                 "request": request,
                 "error_message": f"Error: {e}",
@@ -46,7 +46,7 @@ async def index_post(request: Request, input_text: str = Form(...)):
         content = f"(Files content cropped to {int(MAX_DISPLAY_SIZE/1000)}k characters, download full ingest to see more)\n" + content[:MAX_DISPLAY_SIZE]
         
     return templates.TemplateResponse(
-        "index.html", 
+        "index.jinja.html", 
         {
             "request": request, 
             "summary": summary,

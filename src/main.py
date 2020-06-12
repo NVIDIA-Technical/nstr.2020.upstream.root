@@ -32,7 +32,7 @@ async def health_check():
 @app.get("/api", response_class=HTMLResponse)
 async def api_docs(request: Request):
     return templates.TemplateResponse(
-        "api.html", {"request": request}
+        "api.jinja.html", {"request": request}
     )
 
 @app.get('/favicon.ico')

@@ -15,7 +15,7 @@ templates = Jinja2Templates(directory="templates")
 @router.get("/{full_path:path}")
 async def catch_all(request: Request, full_path: str):
     return templates.TemplateResponse(
-        "github.html",
+        "github.jinja.html",
         {
             "request": request,
             "result": False,
@@ -33,7 +33,7 @@ async def process_catch_all(request: Request, input_text: str = Form(...)):
     except Exception as e:
         print(e)
         return templates.TemplateResponse(
-            "github.html", 
+            "github.jinja.html", 
             {
                 "request": request, 
                 "result": False, 
@@ -47,7 +47,7 @@ async def process_catch_all(request: Request, input_text: str = Form(...)):
         content = f"(Files content cropped to {int(MAX_DISPLAY_SIZE/1000)}k characters, download full digest to see more)\n" + content[:MAX_DISPLAY_SIZE]
         
     return templates.TemplateResponse(
-        "github.html", 
+        "github.jinja.html", 
         {
             "request": request, 
             "result": True, 
