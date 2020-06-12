@@ -3,7 +3,7 @@ import uuid
 
 from config import TMP_BASE_PATH
 
-def parse_url(url: str) -> dict:
+def parse_url(url: str, max_file_size: int) -> dict:
     parsed = {
         
         "user_name": None,
@@ -14,9 +14,10 @@ def parse_url(url: str) -> dict:
         "subpath": "/",
         "local_path": None,
         "url": None,
+        "max_file_size": int(max_file_size) * 1024
     }
     
-    
+    print(f"max_file_size: {max_file_size}")
     if not url.startswith("https://github.com/"):
         raise ValueError("Invalid GitHub URL. Please provide a valid GitHub repository URL.")
     

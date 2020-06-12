@@ -269,7 +269,7 @@ def generate_token_string(context_string: str) -> str:
         formatted_tokens = f"{total_gpt_tokens}"
     return formatted_tokens
 
-def ingest_from_query(query: dict, ignore_patterns: List[str] = DEFAULT_IGNORE_PATTERNS, max_file_size: int = MAX_FILE_SIZE) -> Dict:
+def ingest_from_query(query: dict, ignore_patterns: List[str] = DEFAULT_IGNORE_PATTERNS) -> Dict:
     """Main entry point for analyzing a codebase directory or single file."""
     
     path = f"{query['local_path']}{query['subpath']}"
@@ -286,7 +286,7 @@ def ingest_from_query(query: dict, ignore_patterns: List[str] = DEFAULT_IGNORE_P
             raise ValueError(f"File {path} is not a text file")
             
         content = read_file_content(path)
-        if file_size > max_file_size:
+        if file_size > query['max_file_size']:
             content = "[Content ignored: file too large]"
             
         file_info = {
@@ -316,7 +316,7 @@ def ingest_from_query(query: dict, ignore_patterns: List[str] = DEFAULT_IGNORE_P
     
     else:
         nodes = scan_directory(path, ignore_patterns, query['local_path'])
-        files = extract_files_content(query, nodes, max_file_size)
+        files = extract_files_content(query, nodes, query['max_file_size'])
         summary = create_summary_string(query, nodes, files)
         tree = "Directory structure:\n" + create_tree_structure(query, nodes)
         files_content = create_file_content_string(files)

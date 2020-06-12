@@ -31,7 +31,7 @@ async def home(request: Request):
         {
             "request": request,
             "examples": EXAMPLE_REPOS,
-            "default_file_size": 68
+            "default_file_size": 250
         }
     )
 
@@ -51,8 +51,8 @@ async def index_post(
     print(f"Processing repository with max file size: {size_in_kb}kb")
     
     try:
-        parsed_url = parse_url(input_text)
-        summary, tree, content = await process_query(parsed_url)
+        parsed_query = parse_url(input_text, size_in_kb)
+        summary, tree, content = await process_query(parsed_query)
     except Exception as e:
         print(e)
         return templates.TemplateResponse(
@@ -61,7 +61,8 @@ async def index_post(
                 "request": request,
                 "error_message": f"Error: {e}",
                 "examples": EXAMPLE_REPOS,
-                "default_file_size": slider_position  # Return original slider position
+                "default_file_size": slider_position,  # Return original slider position
+                "github_url": input_text  # Add the URL to the error response
             }
         )
     
@@ -78,9 +79,9 @@ async def index_post(
             "tree": tree, 
             "content": content,
             "examples": EXAMPLE_REPOS,
-            "ingest_id": parsed_url['id'],
-            "default_file_size": slider_position,  # Return original slider position
-            "slider_position": slider_position  # Optional: for debugging
+            "ingest_id": parsed_query['id'],
+            "default_file_size": slider_position,  
+            "github_url": input_text 
         }
     )
 
