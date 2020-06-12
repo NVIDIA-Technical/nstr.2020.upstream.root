@@ -90,7 +90,7 @@ function handleSubmit(event, showLoading = false) {
 function copyFullDigest() {
     const directoryStructure = document.querySelector('.directory-structure').value;
     const filesContent = document.querySelector('.result-text').value;
-    const fullDigest = `Directory Structure:\n\n${directoryStructure}\n\nFiles Content:\n\n${filesContent}`;
+    const fullDigest = `${directoryStructure}\n\nFiles Content:\n\n${filesContent}`;
     const button = document.querySelector('[onclick="copyFullDigest()"]');
     const originalText = button.innerHTML;
 
