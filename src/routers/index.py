@@ -24,7 +24,7 @@ async def home(request: Request):
 
 
 @router.post("/", response_class=HTMLResponse)
-@limiter.limit("10/minute") 
+@limiter.limit("1/20second") 
 async def index_post(request: Request, input_text: str = Form(...)):
 
     try:
