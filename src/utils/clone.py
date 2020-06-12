@@ -29,7 +29,7 @@ async def clone_repo(query: dict) -> str:
             stderr=asyncio.subprocess.PIPE,
         )
         await proc.communicate()
-    elif query['branch'] != 'main' and query['branch'] != 'master':
+    elif query['branch'] != 'main' and query['branch'] != 'master' and query['branch']:
         proc = await asyncio.create_subprocess_exec(
             "git",
             "clone", 
