@@ -25,7 +25,7 @@ async def catch_all(request: Request, full_path: str):
     )
 
 @router.post("/{full_path:path}", response_class=HTMLResponse)
-@limiter.limit("1/20second") 
+@limiter.limit("10/minute") 
 async def process_catch_all(request: Request, input_text: str = Form(...)):
     try:
         parsed_url = parse_url(input_text)

@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Request, Form
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
+
 
 from utils.parse_url import parse_url
 from utils.limiter import limiter
@@ -24,7 +25,7 @@ async def home(request: Request):
 
 
 @router.post("/", response_class=HTMLResponse)
-@limiter.limit("1/20second") 
+@limiter.limit("10/minute") 
 async def index_post(request: Request, input_text: str = Form(...)):
 
     try:
