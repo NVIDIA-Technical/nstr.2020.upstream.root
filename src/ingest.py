@@ -1,32 +1,62 @@
 import os
-import fnmatch
+from pathlib import Path
 from config import DEFAULT_IGNORE_PATTERNS, MAX_FILE_SIZE
 from tokencost import count_string_tokens
 from typing import Dict, List, Union
 
-MAX_DIRECTORY_DEPTH = 10  # Maximum depth of directory traversal
+MAX_DIRECTORY_DEPTH = 20  # Maximum depth of directory traversal
 MAX_FILES = 10000  # Maximum number of files to process
-MAX_TOTAL_SIZE_BYTES = 500 * 1024 * 1024  # 100MB total size limit
+MAX_TOTAL_SIZE_BYTES = 500 * 1024 * 1024  # Total size limit
 
-def should_ignore(path: str, base_path: str, ignore_patterns: List[str]) -> bool:
-    """Checks if a file or directory should be ignored based on patterns."""
-    name = os.path.basename(path)
-    rel_path = os.path.relpath(path, base_path)
+def should_ignore(path: str, base_path: str, ignore_patterns: List[str], include_patterns: List[str] = None) -> bool:
+    """Checks if a file or directory should be ignored based on patterns.
+    
+    Args:
+        path: Path to check
+        base_path: Root directory path for relative path calculations
+        ignore_patterns: List of patterns to ignore
+        include_patterns: Optional list of patterns to explicitly include
+        
+    Returns:
+        True if path should be ignored, False otherwise
+    """
+    path_obj = Path(path)
+    base_path_obj = Path(base_path)
+    name = path_obj.name
+    rel_path = path_obj.relative_to(base_path_obj).as_posix()  # Convert to forward slashes for consistency
+    is_dir = path_obj.is_dir()
+
+    print(f"name: {name}, rel_path: {rel_path}, is_dir: {is_dir}")
+    if include_patterns:
+        for pattern in include_patterns:
+            if pattern == "":
+                continue
+            pattern_obj = Path(pattern)
+            if len(pattern_obj.parts) > 1:  # Pattern contains path separators
+                if is_dir :
+                    return False
+            else:
+                if not is_dir and Path(name).match(pattern):
+                    return False
+        return True  # Ignore if doesn't match any include pattern
     
     for pattern in ignore_patterns:
-        if fnmatch.fnmatch(name, pattern) or \
-           fnmatch.fnmatch(rel_path, pattern):
-            return True
+        if pattern == "":
+                continue
+        pattern_obj = Path(pattern)
+        if len(pattern_obj.parts) > 1:  # Pattern contains path separators
+            if Path(rel_path).match(pattern):
+                return True
+        else:
+            if Path(name).match(pattern):
+                return True
     return False
 
 def is_safe_symlink(symlink_path: str, base_path: str) -> bool:
     """Check if a symlink points to a location within the base directory."""
     try:
-        # Get the absolute path of the symlink target
         target_path = os.path.realpath(symlink_path)
-        # Get the absolute path of the base directory
         base_path = os.path.realpath(base_path)
-        # Check if the target path starts with the base path
         return os.path.commonpath([target_path, base_path]) == base_path
     except (OSError, ValueError):
         # If there's any error resolving the paths, consider it unsafe
@@ -49,24 +79,21 @@ def read_file_content(file_path: str) -> str:
     except Exception as e:
         return f"Error reading file: {str(e)}"
     
-def scan_directory(path: str, ignore_patterns: List[str], base_path: str, seen_paths: set = None, depth: int = 0, stats: Dict = None) -> Dict:
+def scan_directory(path: str, ignore_patterns: List[str], base_path: str, include_patterns: List[str] = None, seen_paths: set = None, depth: int = 0, stats: Dict = None) -> Dict:
     """Recursively analyzes a directory and its contents with safety limits."""
     if seen_paths is None:
         seen_paths = set()
     if stats is None:
         stats = {"total_files": 0, "total_size": 0}
         
-    # Check depth limit
     if depth > MAX_DIRECTORY_DEPTH:
         print(f"Skipping deep directory: {path} (max depth {MAX_DIRECTORY_DEPTH} reached)")
         return None
         
-    # Check total files limit
     if stats["total_files"] >= MAX_FILES:
         print(f"Skipping further processing: maximum file limit ({MAX_FILES}) reached")
         return None
         
-    # Check total size limit
     if stats["total_size"] >= MAX_TOTAL_SIZE_BYTES:
         print(f"Skipping further processing: maximum total size ({MAX_TOTAL_SIZE_BYTES/1024/1024:.1f}MB) reached")
         return None
@@ -91,7 +118,8 @@ def scan_directory(path: str, ignore_patterns: List[str], base_path: str, seen_p
         for item in os.listdir(path):
             item_path = os.path.join(path, item)
             
-            if should_ignore(item_path, base_path, ignore_patterns):
+            if should_ignore(item_path, base_path, ignore_patterns, include_patterns):
+                print(f"--{"/".join(item_path.split('/')[4:])} because it matches ignore pattern")
                 continue
 
             # Handle symlinks
@@ -106,7 +134,6 @@ def scan_directory(path: str, ignore_patterns: List[str], base_path: str, seen_p
                 
                 if os.path.isfile(real_path):
                     file_size = os.path.getsize(real_path)
-                    # Check if adding this file would exceed total size limit
                     if stats["total_size"] + file_size > MAX_TOTAL_SIZE_BYTES:
                         print(f"Skipping file {item_path}: would exceed total size limit")
                         continue
@@ -133,8 +160,8 @@ def scan_directory(path: str, ignore_patterns: List[str], base_path: str, seen_p
                     result["file_count"] += 1
                     
                 elif os.path.isdir(real_path):
-                    subdir = scan_directory(real_path, ignore_patterns, base_path, seen_paths, depth + 1, stats)
-                    if subdir:
+                    subdir = scan_directory(real_path, ignore_patterns, base_path, include_patterns, seen_paths, depth + 1, stats)
+                    if subdir and (not include_patterns or subdir["file_count"] > 0):
                         subdir["name"] = item
                         subdir["path"] = item_path
                         result["children"].append(subdir)
@@ -145,7 +172,6 @@ def scan_directory(path: str, ignore_patterns: List[str], base_path: str, seen_p
 
             if os.path.isfile(item_path):
                 file_size = os.path.getsize(item_path)
-                # Check if adding this file would exceed total size limit
                 if stats["total_size"] + file_size > MAX_TOTAL_SIZE_BYTES:
                     print(f"Skipping file {item_path}: would exceed total size limit")
                     continue
@@ -172,8 +198,8 @@ def scan_directory(path: str, ignore_patterns: List[str], base_path: str, seen_p
                 result["file_count"] += 1
                 
             elif os.path.isdir(item_path):
-                subdir = scan_directory(item_path, ignore_patterns, base_path, seen_paths, depth + 1, stats)
-                if subdir:
+                subdir = scan_directory(item_path, ignore_patterns, base_path, include_patterns, seen_paths, depth + 1, stats)
+                if subdir and (not include_patterns or subdir["file_count"] > 0):
                     result["children"].append(subdir)
                     result["size"] += subdir["size"]
                     result["file_count"] += subdir["file_count"]
@@ -308,9 +334,13 @@ def ingest_single_file(path: str, query: dict) -> Dict:
     return (summary, tree, files_content)
 
 
-def ingest_from_query(query: dict, ignore_patterns: List[str] = DEFAULT_IGNORE_PATTERNS) -> Dict:
+def ingest_from_query(query: dict) -> Dict:
     """Main entry point for analyzing a codebase directory or single file."""
     
+    ignore_patterns = DEFAULT_IGNORE_PATTERNS + query['pattern'] if query['pattern_type'] == 'exclude' else DEFAULT_IGNORE_PATTERNS
+    include_patterns = query['pattern'] if query['pattern_type'] == 'include' else None
+
+    print(include_patterns)
     path = f"{query['local_path']}{query['subpath']}"
     if not os.path.exists(path):
         raise ValueError(f"{query['slug']} cannot be found, make sure the repository is public")
@@ -318,20 +348,14 @@ def ingest_from_query(query: dict, ignore_patterns: List[str] = DEFAULT_IGNORE_P
     if query.get('type') == 'blob':
         return ingest_single_file(path, query)
     else:
-        nodes = scan_directory(path, ignore_patterns, query['local_path'])
+        nodes = scan_directory(path, ignore_patterns, query['local_path'], include_patterns)
         files = extract_files_content(query, nodes, query['max_file_size'])
         summary = create_summary_string(query, nodes, files)
         tree = "Directory structure:\n" + create_tree_structure(query, nodes)
         files_content = create_file_content_string(files)
 
-
         formatted_tokens = generate_token_string(tree + files_content)
         if formatted_tokens:
             summary += f"\nEstimated tokens: {formatted_tokens}"
-        
-        
 
-
-
-    
     return (summary, tree, files_content)

@@ -28,9 +28,11 @@ async def home(request: Request):
 async def index_post(
     request: Request, 
     input_text: str = Form(...),
-    max_file_size: int = Form(...)
+    max_file_size: int = Form(...),
+    pattern_type: str = Form(...),
+    pattern: str = Form(...)
 ):
-    return await process_query(request, input_text, max_file_size, is_index=True)
+    return await process_query(request, input_text, max_file_size, pattern_type, pattern, is_index=True)
     
     
 

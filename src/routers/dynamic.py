@@ -24,7 +24,9 @@ async def catch_all(request: Request, full_path: str):
 async def process_catch_all(
     request: Request, 
     input_text: str = Form(...),
-    max_file_size: int = Form(...)
+    max_file_size: int = Form(...),
+    pattern_type: str = Form(...),
+    pattern: str = Form(...)
 ):
-    return await process_query(request, input_text, max_file_size, is_index=False)
+    return await process_query(request, input_text, max_file_size, pattern_type, pattern, is_index=False)
     

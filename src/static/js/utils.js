@@ -38,12 +38,23 @@ function handleSubmit(event, showLoading = false) {
     if (!submitButton) return;
 
     const formData = new FormData(form);
+
+    // Update file size
     const slider = document.getElementById('file_size');
     if (slider) {
         formData.delete('max_file_size');
         formData.append('max_file_size', slider.value);
     }
 
+    // Update pattern type and pattern
+    const patternType = document.getElementById('pattern_type');
+    const pattern = document.getElementById('pattern');
+    if (patternType && pattern) {
+        formData.delete('pattern_type');
+        formData.delete('pattern');
+        formData.append('pattern_type', patternType.value);
+        formData.append('pattern', pattern.value);
+    }
 
     const originalContent = submitButton.innerHTML;
     const currentStars = document.getElementById('github-stars')?.textContent;

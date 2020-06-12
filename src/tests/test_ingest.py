@@ -26,7 +26,9 @@ def sample_query():
         'branch': 'main',
         'commit': None,
         'max_file_size': 1000000,
-        'slug': 'test_user/test_repo'
+        'slug': 'test_user/test_repo',
+        "pattern_type": "exclude",
+        "pattern": []
     }
 
 @pytest.fixture
@@ -87,9 +89,12 @@ def test_read_file_content(temp_directory):
     assert "Error reading file" in read_file_content("nonexistent.txt")
 
 def test_scan_directory(temp_directory):
+    # Override the default ignore patterns for this test
+    custom_ignore_patterns = ['*.pyc']  # Only ignore .pyc files
+    
     result = scan_directory(
         str(temp_directory),
-        ignore_patterns=['*.pyc'],
+        ignore_patterns=custom_ignore_patterns,  # Use custom patterns instead of defaults
         base_path=str(temp_directory)
     )
     
@@ -178,3 +183,37 @@ def test_ingest_from_query(temp_directory, sample_query):
     assert 'test_user/test_repo' in summary
     assert 'file1.txt' in tree
     assert 'Hello World' in content 
+
+def test_should_ignore_with_include_patterns():
+    ignore_patterns = ['*.pyc', '__pycache__', '.git']
+    include_patterns = ['*.py', '*.txt']
+    
+    # Should include .py and .txt files
+    assert should_ignore('test.py', '/base', ignore_patterns, include_patterns) == False
+    assert should_ignore('test.txt', '/base', ignore_patterns, include_patterns) == False
+    
+    # Should ignore other files
+    assert should_ignore('test.jpg', '/base', ignore_patterns, include_patterns) == True
+    assert should_ignore('test.md', '/base', ignore_patterns, include_patterns) == True
+    
+    # Should still ignore .pyc even though it matches *.py partially
+    assert should_ignore('test.pyc', '/base', ignore_patterns, include_patterns) == True
+
+def test_scan_directory_with_include_patterns(temp_directory):
+    include_patterns = ['*.txt']
+
+    
+    result = scan_directory(
+        str(temp_directory),
+        base_path=str(temp_directory),
+        include_patterns=include_patterns
+    )
+    
+    assert result['type'] == 'directory'
+    assert result['file_count'] == 2  # Only file1.txt and subdir/file3.txt
+    assert result['dir_count'] == 1   # subdir
+    
+    # Verify that .py files are not included
+    file_names = [child['name'] for child in result['children'] if child['type'] == 'file']
+    assert 'file2.py' not in file_names
+    assert 'file1.txt' in file_names
