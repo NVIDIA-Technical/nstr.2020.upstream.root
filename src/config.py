@@ -33,5 +33,5 @@ EXAMPLE_REPOS = [
     {"name": "Ollama", "url": "https://github.com/ollama/ollama"},
     {"name": "Flask", "url": "https://github.com/pallets/flask"},
     {"name": "Tldraw", "url": "https://github.com/tldraw/tldraw"},
-    {"name": "Linux", "url": "https://github.com/torvalds/linux"},
+    {"name": "ApiAnalytics", "url": "https://github.com/tom-draper/api-analytics"},
 ]
