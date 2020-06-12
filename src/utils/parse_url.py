@@ -10,7 +10,7 @@ def validate_github_url(url: str) -> bool:
     github_pattern = r'^https://github\.com/[^/]+/[^/]+'
     return bool(re.match(github_pattern, url))
 
-def parse_url(url: str, max_file_size: int) -> dict:
+def parse_url(url: str) -> dict:
     parsed = {
         "user_name": None,
         "repo_name": None,
@@ -20,7 +20,6 @@ def parse_url(url: str, max_file_size: int) -> dict:
         "subpath": "/",
         "local_path": None,
         "url": None,
-        "max_file_size": int(max_file_size) * 1024
     }
     
     if not validate_github_url(url):
