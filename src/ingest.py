@@ -27,7 +27,7 @@ def is_safe_symlink(symlink_path: str, base_path: str) -> bool:
         # Get the absolute path of the base directory
         base_path = os.path.realpath(base_path)
         # Check if the target path starts with the base path
-        return os.path.commonpath([target_path]) == os.path.commonpath([target_path, base_path])
+        return os.path.commonpath([target_path, base_path]) == base_path
     except (OSError, ValueError):
         # If there's any error resolving the paths, consider it unsafe
         return False
