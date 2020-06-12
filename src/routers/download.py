@@ -6,16 +6,16 @@ from fastapi.responses import Response
 router = APIRouter()
 
 
-@router.get("/download/{ingest_id}")
-async def download_ingest(ingest_id: str):
+@router.get("/download/{digest_id}")
+async def download_ingest(digest_id: str):
     try:
-        with open(f"../tmp/ingest-{ingest_id}.txt", "r") as f:
+        with open(f"../tmp/{digest_id}.txt", "r") as f:
             content = f.read()
         return Response(
             content=content,
             media_type="text/plain",
             headers={
-                "Content-Disposition": f"attachment; filename=gitingest-{ingest_id[:8]}.txt"
+                "Content-Disposition": f"attachment; filename={digest_id}.txt"
             }
         )
     except FileNotFoundError:
