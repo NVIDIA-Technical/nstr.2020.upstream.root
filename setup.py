@@ -24,7 +24,7 @@ setup(
     python_requires=">=3.6",
     author="Romain Courtois",
     author_email="romain@coderamp.io",
-    description="A tool to analyze and create text dumps of git repositories",
+    description="CLI tool to analyze and create text dumps of codebases for LLMs",
     long_description=open("README.md").read(),
     long_description_content_type="text/markdown",
     url="https://github.com/cyclotruc/gitingest",
