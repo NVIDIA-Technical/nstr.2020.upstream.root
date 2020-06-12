@@ -5,10 +5,6 @@ from .decorators import async_timeout
 from config import CLONE_TIMEOUT
 
 async def check_repo_exists(url: str) -> Tuple[bool, str]:
-    """
-    Check if a repository exists and is accessible.
-    Returns a tuple of (exists: bool, error_message: str)
-    """
     proc = await asyncio.create_subprocess_exec(
         "git",
         "ls-remote",
@@ -16,7 +12,7 @@ async def check_repo_exists(url: str) -> Tuple[bool, str]:
         stdout=asyncio.subprocess.PIPE,
         stderr=asyncio.subprocess.PIPE,
     )
-    _, stderr = await proc.communicate()
+    await proc.communicate()
     if proc.returncode != 0:
         return False
     return True
@@ -36,7 +32,7 @@ async def clone_repo(query: dict) -> str:
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,
         )
-        await proc.communicate()
+        stdout, stderr = await proc.communicate()
         
         proc = await asyncio.create_subprocess_exec(
             "git",
@@ -47,7 +43,7 @@ async def clone_repo(query: dict) -> str:
             stdout=asyncio.subprocess.PIPE, 
             stderr=asyncio.subprocess.PIPE,
         )
-        await proc.communicate()
+        stdout, stderr = await proc.communicate()
     elif query['branch'] != 'main' and query['branch'] != 'master' and query['branch']:
         proc = await asyncio.create_subprocess_exec(
             "git",
@@ -73,4 +69,6 @@ async def clone_repo(query: dict) -> str:
             stderr=asyncio.subprocess.PIPE,
         )
         
-    await proc.communicate()
+    stdout, stderr = await proc.communicate()
+    
+    return stdout, stderr   
