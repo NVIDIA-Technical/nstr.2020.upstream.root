@@ -36,6 +36,11 @@ async def remove_old_repositories():
 
     The repository URL is extracted from the first .txt file in each directory,
     assuming the filename format: "owner-repository.txt"
+
+    Returns
+    -------
+    None
+        This coroutine never returns, it runs indefinitely until cancelled.
     """
     while True:
         try:
@@ -52,36 +57,67 @@ async def remove_old_repositories():
                 if current_time - os.path.getctime(folder_path) <= DELETE_REPO_AFTER:
                     continue
 
-                # Try to log repository URL before deletion
-                try:
-                    txt_files = [f for f in os.listdir(folder_path) if f.endswith(".txt")]
-                    if txt_files:
-                        filename = txt_files[0].replace(".txt", "")
-                        if "-" in filename:
-                            owner, repo = filename.split("-", 1)
-                            repo_url = f"https://github.com/{owner}/{repo}"
-                            with open("history.txt", "a") as history:
-                                history.write(f"{repo_url}\n")
-                except Exception as e:
-                    print(f"Error logging repository URL for {folder_path}: {str(e)}")
-
-                # Delete the folder
-                try:
-                    shutil.rmtree(folder_path)
-                except Exception as e:
-                    print(f"Error deleting {folder_path}: {str(e)}")
+                await process_folder(folder_path)
 
         except Exception as e:
             print(f"Error in remove_old_repositories: {str(e)}")
 
         await asyncio.sleep(60)
 
+    return
+
+
+async def process_folder(folder_path: str) -> None:
+    """
+    Process a single folder for deletion and logging.
+
+    Parameters
+    ----------
+    folder_path : str
+        The path to the folder to be processed.
+
+    Returns
+    -------
+    None
+        This function doesn't return anything but performs side effects.
+    """
+    # Try to log repository URL before deletion
+    try:
+        txt_files = [f for f in os.listdir(folder_path) if f.endswith(".txt")]
+        if txt_files:
+            filename = txt_files[0].replace(".txt", "")
+            if "-" in filename:
+                owner, repo = filename.split("-", 1)
+                repo_url = f"https://github.com/{owner}/{repo}"
+                with open("history.txt", "a", encoding="utf-8") as history:
+                    history.write(f"{repo_url}\n")
+    except Exception as e:
+        print(f"Error logging repository URL for {folder_path}: {str(e)}")
+
+    # Delete the folder
+    try:
+        shutil.rmtree(folder_path)
+    except Exception as e:
+        print(f"Error deleting {folder_path}: {str(e)}")
+
+    return
+
 
 @asynccontextmanager
-async def lifespan(app: FastAPI):
+async def lifespan(_: FastAPI):
     """
     Lifecycle manager for the FastAPI application.
     Handles startup and shutdown events.
+
+    Parameters
+    ----------
+    _ : FastAPI
+        The FastAPI application instance (unused).
+
+    Yields
+    -------
+    None
+        Yields control back to the FastAPI application while the background task runs.
     """
     task = asyncio.create_task(remove_old_repositories())
 
