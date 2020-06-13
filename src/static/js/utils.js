@@ -83,7 +83,8 @@ function handleSubmit(event, showLoading = false) {
             // Store the star count before updating the DOM
             const starCount = currentStars;
 
-
+            // Replace the entire body content with the new HTML
+            document.body.innerHTML = html;
 
             // Wait for next tick to ensure DOM is updated
             setTimeout(() => {
