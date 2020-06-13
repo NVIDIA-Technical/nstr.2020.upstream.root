@@ -149,6 +149,25 @@ def _read_file_content(file_path: str) -> str:
         return f"Error reading file: {str(e)}"
 
 
+def _sort_children(children: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """
+    Sort children nodes with files first, then directories, both in alphanumerical order.
+
+    Parameters
+    ----------
+    children : list[dict[str, Any]]
+        List of file and directory nodes to sort.
+
+    Returns
+    -------
+    list[dict[str, Any]]
+        Sorted list with files first, followed by directories.
+    """
+    files = sorted([child for child in children if child["type"] == "file"], key=lambda x: x["name"])
+    directories = sorted([child for child in children if child["type"] == "directory"], key=lambda x: x["name"])
+    return files + directories
+
+
 def _scan_directory(
     path: str,
     query: dict[str, Any],
@@ -328,6 +347,9 @@ def _scan_directory(
                     result["size"] += subdir["size"]
                     result["file_count"] += subdir["file_count"]
                     result["dir_count"] += 1 + subdir["dir_count"]
+
+        result["children"] = _sort_children(result["children"])
+        return result
 
     except PermissionError:
         print(f"Permission denied: {path}")
