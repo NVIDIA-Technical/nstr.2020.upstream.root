@@ -394,9 +394,9 @@ def ingest_directory(path: str, query: dict[str, Any]) -> tuple[str, str, str]:
 
 def ingest_from_query(query: dict[str, Any]) -> tuple[str, str, str]:
     """Main entry point for analyzing a codebase directory or single file."""
-    path = f"{query['local_path']}{query['subpath']}"
-    if not os.path.exists(path):
-        raise ValueError(f"{query['slug']} cannot be found")
+    path = os.path.join(query["local_path"], query["subpath"].lstrip(os.sep))
+    if not os.path.exists(path) and not os.path.exists(os.path.dirname(path)):
+        raise ValueError(f"{query['subpath']} cannot be found")
 
     if query.get("type") == "blob":
         return ingest_single_file(path, query)
