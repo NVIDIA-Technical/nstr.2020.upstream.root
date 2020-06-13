@@ -38,11 +38,14 @@ def parse_url(url: str) -> dict[str, Any]:
         "commit": None,
         "subpath": "/",
         "local_path": f"{TMP_BASE_PATH}/{_id}/{slug}",
-        # Keep original URL format but with decoded components
         "url": f"https://{domain}/{user_name}/{repo_name}",
         "slug": slug,
         "id": _id,
     }
+
+    # If this is an issues page, return early without processing subpath
+    if len(path_parts) > 2 and (path_parts[2] == "issues" or path_parts[2] == "pull"):
+        return parsed
 
     if len(path_parts) < 4:
         return parsed
@@ -50,29 +53,14 @@ def parse_url(url: str) -> dict[str, Any]:
     parsed["type"] = path_parts[2]  # Usually 'tree' or 'blob'
     commit = path_parts[3]
 
-    # Find the commit hash or reconstruct the branch name
-    remaining_parts = path_parts[3:]
-
     if _is_valid_git_commit_hash(commit):
         parsed["commit"] = commit
-        if len(remaining_parts) > 1:
-            parsed["subpath"] += "/".join(remaining_parts[1:])
-        return parsed
-
-    # Handle branch names with slashes and special characters
-
-    # Find the index of the first type indicator ("tree" or "blob"), if any
-    type_indicator_index = next((i for i, part in enumerate(remaining_parts) if part in ("tree", "blob")), None)
-
-    if type_indicator_index is None:
-        # No type indicator found; assume the entire input is the branch name
-        parsed["branch"] = "/".join(remaining_parts)
-        return parsed
-
-    # Found a type indicator; update branch and subpath
-    parsed["branch"] = "/".join(remaining_parts[:type_indicator_index])
-    if len(remaining_parts) > type_indicator_index + 2:
-        parsed["subpath"] += "/".join(remaining_parts[type_indicator_index + 2 :])
+        if len(path_parts) > 4:
+            parsed["subpath"] += "/".join(path_parts[4:])
+    else:
+        parsed["branch"] = commit
+        if len(path_parts) > 4:
+            parsed["subpath"] += "/".join(path_parts[4:])
 
     return parsed
 
