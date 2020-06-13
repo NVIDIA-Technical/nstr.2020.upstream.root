@@ -8,7 +8,7 @@ from urllib.parse import unquote
 from gitingest.exceptions import InvalidPatternError
 from gitingest.ignore_patterns import DEFAULT_IGNORE_PATTERNS
 
-TMP_BASE_PATH: str = "../tmp"
+TMP_BASE_PATH: str = "/tmp/gitingest"
 HEX_DIGITS = set(string.hexdigits)
 
 
