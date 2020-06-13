@@ -1,4 +1,4 @@
-""" gitingest: A package for ingesting data from git repositories. """
+""" Gitingest: A package for ingesting data from git repositories. """
 
 from gitingest.clone import clone_repo
 from gitingest.ingest import ingest
