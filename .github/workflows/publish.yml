@@ -31,11 +31,49 @@ jobs:
         run: |
           python -m build
 
-      # Step 5: Publish to PyPI
+      # Step 5: Verify the built package
+      - name: Verify package
+        run: |
+          if [ ! -f "dist/*.whl" ] || [ ! -f "dist/*.tar.gz" ]; then
+            echo "Expected wheel and source distribution files not found in dist/"
+            exit 1
+          fi
+          python -m twine check dist/*
+
+      # Step 6: Verify version matches the release tag
+      - name: Verify version
+        if: github.event_name == 'release'
+        run: |
+          # Extract version from pyproject.toml
+          PROJECT_VERSION=$(grep "^version = " pyproject.toml | cut -d'"' -f2)
+          # Remove 'v' prefix from tag if present
+          TAG_VERSION=${GITHUB_REF#refs/tags/}
+          TAG_VERSION=${TAG_VERSION#v}
+
+          if [ "$PROJECT_VERSION" != "$TAG_VERSION" ]; then
+            echo "Version mismatch: pyproject.toml version ($PROJECT_VERSION) doesn't match release tag ($TAG_VERSION)"
+            exit 1
+          fi
+
+      # Step 7: Publish to PyPI
       - name: Publish to PyPI
         env:
           TWINE_USERNAME: __token__
           TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
         run: |
-          python -m twine check dist/*
           python -m twine upload --skip-existing dist/*
+
+      # Step 8: Verify package is available on PyPI
+      - name: Verify PyPI upload
+        run: |
+          # Wait a bit for PyPI to process the upload
+          sleep 30
+
+          # Extract package name from pyproject.toml
+          PACKAGE_NAME=$(grep "^name = " pyproject.toml | cut -d'"' -f2)
+
+          # Check if package exists on PyPI
+          if ! pip install $PACKAGE_NAME==`python setup.py --version` --no-deps --dry-run; then
+            echo "Failed to verify package on PyPI"
+            exit 1
+          fi
