@@ -181,47 +181,30 @@ class VannaBase(ABC):
             str: The extracted SQL query.
         """
 
-        import re
-        """
-        Extracts the SQL query from the LLM response, handling various formats including:
-        - WITH clause
-        - SELECT statement
-        - CREATE TABLE AS SELECT
-        - Markdown code blocks
-        """
-
-        # Match CREATE TABLE ... AS SELECT
-        sqls = re.findall(r"\bCREATE\s+TABLE\b.*?\bAS\b.*?;", llm_response, re.DOTALL | re.IGNORECASE)
+        # If the llm_response contains a CTE (with clause), extract the last sql between WITH and ;
+        sqls = re.findall(r"\bWITH\b .*?;", llm_response, re.DOTALL)
         if sqls:
             sql = sqls[-1]
             self.log(title="Extracted SQL", message=f"{sql}")
             return sql
 
-        # Match WITH clause (CTEs)
-        sqls = re.findall(r"\bWITH\b .*?;", llm_response, re.DOTALL | re.IGNORECASE)
+        # If the llm_response is not markdown formatted, extract last sql by finding select and ; in the response
+        sqls = re.findall(r"SELECT.*?;", llm_response, re.DOTALL)
         if sqls:
             sql = sqls[-1]
             self.log(title="Extracted SQL", message=f"{sql}")
             return sql
 
-        # Match SELECT ... ;
-        sqls = re.findall(r"\bSELECT\b .*?;", llm_response, re.DOTALL | re.IGNORECASE)
+        # If the llm_response contains a markdown code block, with or without the sql tag, extract the last sql from it
+        sqls = re.findall(r"```sql\n(.*)```", llm_response, re.DOTALL)
         if sqls:
             sql = sqls[-1]
             self.log(title="Extracted SQL", message=f"{sql}")
             return sql
 
-        # Match ```sql ... ``` blocks
-        sqls = re.findall(r"```sql\s*\n(.*?)```", llm_response, re.DOTALL | re.IGNORECASE)
+        sqls = re.findall(r"```(.*)```", llm_response, re.DOTALL)
         if sqls:
-            sql = sqls[-1].strip()
-            self.log(title="Extracted SQL", message=f"{sql}")
-            return sql
-
-        # Match any ``` ... ``` code blocks
-        sqls = re.findall(r"```(.*?)```", llm_response, re.DOTALL | re.IGNORECASE)
-        if sqls:
-            sql = sqls[-1].strip()
+            sql = sqls[-1]
             self.log(title="Extracted SQL", message=f"{sql}")
             return sql
 
