@@ -7,7 +7,7 @@ import asyncio
 import click
 
 from gitingest.config import MAX_FILE_SIZE, OUTPUT_FILE_PATH
-from gitingest.repository_ingest import ingest
+from gitingest.repository_ingest import ingest_async
 
 
 @click.command()
@@ -92,7 +92,7 @@ async def _async_main(
 
         if not output:
             output = OUTPUT_FILE_PATH
-        summary, _, _ = await ingest(source, max_size, include_patterns, exclude_patterns, branch, output=output)
+        summary, _, _ = await ingest_async(source, max_size, include_patterns, exclude_patterns, branch, output=output)
 
         click.echo(f"Analysis complete! Output written to: {output}")
         click.echo("\nSummary:")

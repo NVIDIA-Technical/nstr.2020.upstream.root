@@ -10,7 +10,7 @@ from gitingest.query_parser import ParsedQuery, parse_query
 from gitingest.repository_clone import CloneConfig, clone_repo
 
 
-async def ingest(
+async def ingest_async(
     source: str,
     max_file_size: int = 10 * 1024 * 1024,  # 10 MB
     include_patterns: set[str] | str | None = None,
@@ -96,3 +96,58 @@ async def ingest(
         if parsed_query.url:
             # Clean up the temporary directory
             shutil.rmtree(TMP_BASE_PATH, ignore_errors=True)
+
+
+def ingest(
+    source: str,
+    max_file_size: int = 10 * 1024 * 1024,  # 10 MB
+    include_patterns: set[str] | str | None = None,
+    exclude_patterns: set[str] | str | None = None,
+    branch: str | None = None,
+    output: str | None = None,
+) -> tuple[str, str, str]:
+    """
+    Synchronous version of ingest_async.
+
+    This function analyzes a source (URL or local path), clones the corresponding repository (if applicable),
+    and processes its files according to the specified query parameters. It returns a summary, a tree-like
+    structure of the files, and the content of the files. The results can optionally be written to an output file.
+
+    Parameters
+    ----------
+    source : str
+        The source to analyze, which can be a URL (for a Git repository) or a local directory path.
+    max_file_size : int
+        Maximum allowed file size for file ingestion. Files larger than this size are ignored, by default
+        10*1024*1024 (10 MB).
+    include_patterns : set[str] | str | None, optional
+        Pattern or set of patterns specifying which files to include. If `None`, all files are included.
+    exclude_patterns : set[str] | str | None, optional
+        Pattern or set of patterns specifying which files to exclude. If `None`, no files are excluded.
+    branch : str | None, optional
+        The branch to clone and ingest. If `None`, the default branch is used.
+    output : str | None, optional
+        File path where the summary and content should be written. If `None`, the results are not written to a file.
+
+    Returns
+    -------
+    tuple[str, str, str]
+        A tuple containing:
+        - A summary string of the analyzed repository or directory.
+        - A tree-like string representation of the file structure.
+        - The content of the files in the repository or directory.
+
+    See Also
+    --------
+    ingest_async : The asynchronous version of this function.
+    """
+    return asyncio.run(
+        ingest_async(
+            source=source,
+            max_file_size=max_file_size,
+            include_patterns=include_patterns,
+            exclude_patterns=exclude_patterns,
+            branch=branch,
+            output=output,
+        )
+    )
