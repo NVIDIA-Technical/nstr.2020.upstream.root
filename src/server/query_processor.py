@@ -9,8 +9,12 @@ from gitingest.clone import clone_repo
 from gitingest.ingestion import ingest_query
 from gitingest.query_parser import IngestionQuery, parse_query
 from gitingest.utils.git_utils import validate_github_token
-from server.models import IngestErrorResponse, IngestResponse, IngestSuccessResponse
-from server.server_config import MAX_DISPLAY_SIZE
+from server.server_config import (
+    DEFAULT_FILE_SIZE_KB,
+    EXAMPLE_REPOS,
+    MAX_DISPLAY_SIZE,
+    templates,
+)
 from server.server_utils import Colors, log_slider_to_size
 
 
@@ -63,6 +67,8 @@ async def process_query(
     if token:
         validate_github_token(token)
 
+    template = "index.jinja" if is_index else "git.jinja"
+    template_response = partial(templates.TemplateResponse, name=template)
     max_file_size = log_slider_to_size(slider_position)
 
     query: IngestionQuery | None = None
@@ -99,7 +105,10 @@ async def process_query(
             print(f"{Colors.BROWN}WARN{Colors.END}: {Colors.RED}<-  {Colors.END}", end="")
             print(f"{Colors.RED}{exc}{Colors.END}")
 
-        return IngestErrorResponse(error=str(exc), repo_url=short_repo_url)
+        context["error_message"] = f"Error: {exc}"
+        if "405" in str(exc):
+            context["error_message"] = "Repository not found. Please make sure it is public."
+        return template_response(context=context)
 
     if len(content) > MAX_DISPLAY_SIZE:
         content = (

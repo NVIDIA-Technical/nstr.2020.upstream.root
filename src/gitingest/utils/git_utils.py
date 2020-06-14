@@ -4,15 +4,27 @@ from __future__ import annotations
 
 import asyncio
 import base64
+import os
 import re
 from typing import Final
 import sys
+from typing import Final
 from urllib.parse import urlparse
 
 import httpx
 from starlette.status import HTTP_200_OK, HTTP_401_UNAUTHORIZED, HTTP_403_FORBIDDEN, HTTP_404_NOT_FOUND
 
 from gitingest.utils.compat_func import removesuffix
+
+from starlette.status import (
+    HTTP_200_OK,
+    HTTP_301_MOVED_PERMANENTLY,
+    HTTP_302_FOUND,
+    HTTP_401_UNAUTHORIZED,
+    HTTP_403_FORBIDDEN,
+    HTTP_404_NOT_FOUND,
+)
+
 from gitingest.utils.exceptions import InvalidGitHubTokenError
 from server.server_utils import Colors
 
@@ -130,28 +142,46 @@ async def check_repo_exists(url: str, token: str | None = None) -> bool:
         If the host returns an unrecognised status code.
 
     """
-    headers = {}
+    # TODO: use `requests` instead of `curl`
+    cmd: list[str] = [
+        "curl",
+        "--silent",
+        "--location",
+        "--head",
+        "--write-out",
+        "%{http_code}",
+        "-o",
+        os.devnull,
+    ]
 
     if token and is_github_host(url):
         host, owner, repo = _parse_github_url(url)
         # Public GitHub vs. GitHub Enterprise
         base_api = "https://api.github.com" if host == "github.com" else f"https://{host}/api/v3"
         url = f"{base_api}/repos/{owner}/{repo}"
-        headers["Authorization"] = f"Bearer {token}"
+        cmd += [f"Authorization: Bearer {token}"]
 
-    async with httpx.AsyncClient(follow_redirects=True) as client:
-        try:
-            response = await client.head(url, headers=headers)
-        except httpx.RequestError:
-            return False
+    cmd.append(url)
 
-    status_code = response.status_code
+    proc = await asyncio.create_subprocess_exec(
+        *cmd,
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.PIPE,
+    )
+    stdout, _ = await proc.communicate()
 
-    if status_code == HTTP_200_OK:
-        return True
-    if status_code in {HTTP_401_UNAUTHORIZED, HTTP_403_FORBIDDEN, HTTP_404_NOT_FOUND}:
+    if proc.returncode != 0:
         return False
-    msg = f"Unexpected HTTP status {status_code} for {url}"
+
+    status = int(stdout.decode().strip())
+    if status in {HTTP_200_OK, HTTP_301_MOVED_PERMANENTLY}:
+        return True
+    # TODO: handle 302 redirects
+    if status in {HTTP_404_NOT_FOUND, HTTP_302_FOUND}:
+        return False
+    if status in {HTTP_401_UNAUTHORIZED, HTTP_403_FORBIDDEN}:
+        return False
+    msg = f"Unexpected HTTP status {status} for {url}"
     raise RuntimeError(msg)
 
 
@@ -183,7 +213,7 @@ def _parse_github_url(url: str) -> tuple[str, str, str]:
         msg = f"Un-recognised GitHub hostname: {parsed.hostname!r}"
         raise ValueError(msg)
 
-    parts = removesuffix(parsed.path, ".git").strip("/").split("/")
+    parts = parsed.path.strip("/").removesuffix(".git").split("/")
     expected_path_length = 2
     if len(parts) != expected_path_length:
         msg = f"Path must look like /<owner>/<repo>: {parsed.path!r}"
@@ -216,28 +246,13 @@ async def fetch_remote_branches_or_tags(url: str, *, ref_type: str, token: str |
         If the ``ref_type`` parameter is not "branches" or "tags".
 
     """
-    if ref_type not in ("branches", "tags"):
-        msg = f"Invalid fetch type: {ref_type}"
-        raise ValueError(msg)
-
     cmd = ["git"]
 
     # Add authentication if needed
     if token and is_github_host(url):
         cmd += ["-c", create_git_auth_header(token, url=url)]
 
-    cmd += ["ls-remote"]
-
-    fetch_tags = ref_type == "tags"
-    to_fetch = "tags" if fetch_tags else "heads"
-
-    cmd += [f"--{to_fetch}"]
-
-    # `--refs` filters out the peeled tag objects (those ending with "^{}") (for tags)
-    if fetch_tags:
-        cmd += ["--refs"]
-
-    cmd += [url]
+    cmd += ["ls-remote", "--heads", url]
 
     await ensure_git_installed()
     stdout, _ = await run_command(*cmd)
@@ -246,9 +261,9 @@ async def fetch_remote_branches_or_tags(url: str, *, ref_type: str, token: str |
     # - Skip empty lines and lines that don't contain "refs/{to_fetch}/"
     # - Extract the branch or tag name after "refs/{to_fetch}/"
     return [
-        line.split(f"refs/{to_fetch}/", 1)[1]
+        line.split("refs/heads/", 1)[1]
         for line in stdout.decode().splitlines()
-        if line.strip() and f"refs/{to_fetch}/" in line
+        if line.strip() and "refs/heads/" in line
     ]
 
 
