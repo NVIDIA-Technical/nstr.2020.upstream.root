@@ -6,15 +6,9 @@ import asyncio
 import base64
 import os
 import re
-from typing import Final
 import sys
 from typing import Final
 from urllib.parse import urlparse
-
-import httpx
-from starlette.status import HTTP_200_OK, HTTP_401_UNAUTHORIZED, HTTP_403_FORBIDDEN, HTTP_404_NOT_FOUND
-
-from gitingest.utils.compat_func import removesuffix
 
 from starlette.status import (
     HTTP_200_OK,
@@ -104,7 +98,7 @@ async def ensure_git_installed() -> None:
         raise RuntimeError(msg) from exc
     if sys.platform == "win32":
         try:
-            stdout, _ = await run_command("git", "config", "--global", "core.longpaths")
+            stdout, _ = await run_command("git", "config", "core.longpaths")
             if stdout.decode().strip().lower() != "true":
                 print(
                     f"{Colors.BROWN}WARN{Colors.END}: {Colors.RED}Git clone may fail on Windows "
