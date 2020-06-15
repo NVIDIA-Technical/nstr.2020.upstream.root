@@ -91,9 +91,10 @@ async def test_clone_nonexistent_repository(repo_exists_true: AsyncMock) -> None
 @pytest.mark.parametrize(
     ("status_code", "expected"),
     [
-        (b"200\n", 0, True),  # Existing repo
-        (b"404\n", 0, False),  # Non-existing repo
-        (b"200\n", 1, False),  # Failed request
+        (HTTP_200_OK, True),
+        (HTTP_401_UNAUTHORIZED, False),
+        (HTTP_403_FORBIDDEN, False),
+        (HTTP_404_NOT_FOUND, False),
     ],
 )
 async def test_check_repo_exists(status_code: int, *, expected: bool, mocker: MockerFixture) -> None:
@@ -206,25 +207,6 @@ async def test_check_repo_exists_with_redirect(mocker: MockerFixture) -> None:
     repo_exists = await check_repo_exists(DEMO_URL)
 
     assert repo_exists is False
-
-
-@pytest.mark.asyncio
-async def test_check_repo_exists_with_permanent_redirect(mocker: MockerFixture) -> None:
-    """Test ``check_repo_exists`` when a permanent redirect (301) is returned.
-
-    Given a URL that responds with "301 Found":
-    When ``check_repo_exists`` is called,
-    Then it should return ``True``, indicating the repo may exist at the new location.
-    """
-    mock_exec = mocker.patch("asyncio.create_subprocess_exec", new_callable=AsyncMock)
-    mock_process = AsyncMock()
-    mock_process.communicate.return_value = (b"301\n", b"")
-    mock_process.returncode = 0  # Simulate successful request
-    mock_exec.return_value = mock_process
-
-    repo_exists = await check_repo_exists(DEMO_URL)
-
-    assert repo_exists
 
 
 @pytest.mark.asyncio
