@@ -1,6 +1,5 @@
 function submitExample(repoName) {
-    const input = document.getElementById('input_text');
-
+    const input = document.getElementById("input_text");
     if (input) {
         input.value = repoName;
         input.focus();

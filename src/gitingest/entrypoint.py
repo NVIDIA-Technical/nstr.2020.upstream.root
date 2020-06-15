@@ -27,7 +27,6 @@ async def ingest_async(
     branch: str | None = None,
     tag: str | None = None,
     include_gitignored: bool = False,
-    include_submodules: bool = False,
     token: str | None = None,
     output: str | None = None,
 ) -> tuple[str, str, str]:
@@ -53,8 +52,6 @@ async def ingest_async(
         The tag to clone and ingest. If ``None``, no tag is used.
     include_gitignored : bool
         If ``True``, include files ignored by ``.gitignore`` and ``.gitingestignore`` (default: ``False``).
-    include_submodules : bool
-        If ``True``, recursively include all Git submodules within the repository (default: ``False``).
     token : str | None
         GitHub personal access token (PAT) for accessing private repositories.
         Can also be set via the ``GITHUB_TOKEN`` environment variable.
@@ -89,8 +86,6 @@ async def ingest_async(
     if query.url:
         _override_branch_and_tag(query, branch=branch, tag=tag)
 
-    query.include_submodules = include_submodules
-
     async with _clone_repo_if_remote(query, token=token):
         summary, tree, content = ingest_query(query)
         await _write_output(tree, content=content, target=output)
@@ -106,7 +101,6 @@ def ingest(
     branch: str | None = None,
     tag: str | None = None,
     include_gitignored: bool = False,
-    include_submodules: bool = False,
     token: str | None = None,
     output: str | None = None,
 ) -> tuple[str, str, str]:
@@ -132,8 +126,6 @@ def ingest(
         The tag to clone and ingest. If ``None``, no tag is used.
     include_gitignored : bool
         If ``True``, include files ignored by ``.gitignore`` and ``.gitingestignore`` (default: ``False``).
-    include_submodules : bool
-        If ``True``, recursively include all Git submodules within the repository (default: ``False``).
     token : str | None
         GitHub personal access token (PAT) for accessing private repositories.
         Can also be set via the ``GITHUB_TOKEN`` environment variable.
@@ -164,7 +156,6 @@ def ingest(
             branch=branch,
             tag=tag,
             include_gitignored=include_gitignored,
-            include_submodules=include_submodules,
             token=token,
             output=output,
         ),
