@@ -87,13 +87,15 @@ class ChromaAgentMemory(AgentMemory):
             memory_id = self._create_memory_id(question, tool_name, args)
             timestamp = datetime.now().isoformat()
             
+            # ChromaDB only accepts primitive types in metadata
+            # Serialize complex objects to JSON strings
             memory_data = {
                 "question": question,
                 "tool_name": tool_name,
-                "args": args,
+                "args_json": json.dumps(args),  # Serialize to JSON string
                 "timestamp": timestamp,
                 "success": success,
-                "metadata": metadata or {}
+                "metadata_json": json.dumps(metadata or {})  # Serialize metadata too
             }
             
             # Use question as document text for embedding
@@ -118,10 +120,16 @@ class ChromaAgentMemory(AgentMemory):
         def _search():
             collection = self._get_collection()
             
-            # Prepare where filter
-            where_filter = {"success": True}  # Only successful usage patterns
+            # Prepare where filter - ChromaDB requires $and for multiple conditions
             if tool_name_filter:
-                where_filter["tool_name"] = tool_name_filter
+                where_filter = {
+                    "$and": [
+                        {"success": True},
+                        {"tool_name": tool_name_filter}
+                    ]
+                }
+            else:
+                where_filter = {"success": True}
             
             results = collection.query(
                 query_texts=[question],
@@ -140,13 +148,17 @@ class ChromaAgentMemory(AgentMemory):
                     similarity_score = max(0, 1 - distance)
                     
                     if similarity_score >= similarity_threshold:
+                        # Deserialize JSON fields
+                        args = json.loads(metadata.get("args_json", "{}"))
+                        metadata_dict = json.loads(metadata.get("metadata_json", "{}"))
+                        
                         memory = ToolMemory(
                             question=metadata["question"],
                             tool_name=metadata["tool_name"],
-                            args=metadata["args"],
+                            args=args,
                             timestamp=metadata.get("timestamp"),
                             success=metadata.get("success", True),
-                            metadata=metadata.get("metadata", {})
+                            metadata=metadata_dict
                         )
                         
                         search_results.append(MemorySearchResult(
