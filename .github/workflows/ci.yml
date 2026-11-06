@@ -46,7 +46,7 @@ jobs:
           python -m pip install ".[dev,server]"
 
       - name: Cache pytest results
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: .pytest_cache
           key: ${{ runner.os }}-pytest-${{ matrix.python-version }}-${{ hashFiles('**/pytest.ini') }}
